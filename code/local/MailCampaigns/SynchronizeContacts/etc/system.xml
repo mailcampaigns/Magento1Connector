@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+    <tabs>
+        <mailcampaigns translate="label">
+            <label>MailCampaigns (v1.4.0)</label>
+            <sort_order>100</sort_order>
+        </mailcampaigns>
+    </tabs>
+    <sections>
+        <mailcampaigns translate="label">
+            <label>Connector Configuratie</label>
+            <tab>mailcampaigns</tab>
+            <sort_order>1000</sort_order>
+            <show_in_default>0</show_in_default>
+            <show_in_website>0</show_in_website>
+            <show_in_store>1</show_in_store>
+            <groups>
+                <mailcampaigns_group translate="label">
+                    <label>MailCampaigns Connector Configuratie</label>
+                    <frontend_type>text</frontend_type>
+                    <sort_order>1000</sort_order>
+                    <show_in_default>0</show_in_default>
+                    <show_in_website>0</show_in_website>
+                    <show_in_store>1</show_in_store>
+                    <fields>
+                        <mailcampaigns_api_key translate="label">
+                            <label>API Key: </label>
+                            <comment>De API Key zoals te zien in MailCampaigns > Instellingen > API en Javascripts</comment>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>20</sort_order>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </mailcampaigns_api_key>
+						<mailcampaigns_api_usertoken translate="label">
+                            <label>API User Token: </label>
+                            <comment>De API User Token zoals te zien in MailCampaigns > Instellingen > API en Javascripts</comment>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>21</sort_order>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </mailcampaigns_api_usertoken>
+                    </fields>
+                </mailcampaigns_group>
+				
+				<mailcampaigns__syncoptions_group translate="label">
+                    <label>Synchronisatie Configuratie</label>
+                    <frontend_type>text</frontend_type>
+                    <sort_order>1001</sort_order>
+                    <show_in_default>0</show_in_default>
+                    <show_in_website>0</show_in_website>
+                    <show_in_store>1</show_in_store>
+                    <fields>
+						<mailcampaigns_import_customers translate="label">
+                            <label>Klanten synchroniseren? </label>
+                            <comment>U kunt ervoor kiezen om de klanten up-to-date te houden</comment>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>23</sort_order>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </mailcampaigns_import_customers>
+						<mailcampaigns_import_mailing_list translate="label">
+                            <label>Mailinglijst synchroniseren? </label>
+                            <comment>U kunt ervoor kiezen om de mailinglijst up-to-date te houden.</comment>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>22</sort_order>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </mailcampaigns_import_mailing_list>
+						<mailcampaigns_import_products translate="label">
+                            <label>Producten synchroniseren? </label>
+                            <comment>U kunt ervoor kiezen om de producten up-to-date te houden.</comment>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>25</sort_order>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </mailcampaigns_import_products>
+						<mailcampaigns_import_orders translate="label">
+                            <label>Orders synchroniseren? </label>
+                            <comment>U kunt ervoor kiezen om de orders up-to-date te houden.</comment>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>27</sort_order>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </mailcampaigns_import_orders>
+						<mailcampaigns_import_quotes translate="label">
+                            <label>Quotes synchroniseren? </label>
+                            <comment>U kunt ervoor kiezen om de quotes up-to-date te houden.</comment>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>28</sort_order>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </mailcampaigns_import_quotes>
+                    </fields>
+                </mailcampaigns__syncoptions_group>
+				
+				<mailcampaigns_history_group translate="label">
+                    <label>Historie importeer opties</label>
+                    <frontend_type>text</frontend_type>
+                    <sort_order>1002</sort_order>
+                    <show_in_default>0</show_in_default>
+                    <show_in_website>0</show_in_website>
+                    <show_in_store>1</show_in_store>
+                    <fields>
+						<mailcampaigns_import_customers_history translate="label">
+                            <label>Klanten historie importeren? </label>
+                            <comment>U kunt ervoor kiezen om de historie van klanten mee te importeren</comment>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>30</sort_order>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </mailcampaigns_import_customers_history>
+						<mailcampaigns_import_customers_amount translate="label">
+                            <label>Aantal klanten per cron: </label>
+                            <comment>Het aantal klanten dat per cronrun gesynched wordt</comment>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>31</sort_order>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </mailcampaigns_import_customers_amount>
+						<mailcampaigns_import_mailing_list_history translate="label">
+                            <label>Mailinglijst historie importeren? </label>
+                            <comment>U kunt ervoor kiezen om de historie van de mailinglijst mee te importeren</comment>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>32</sort_order>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </mailcampaigns_import_mailing_list_history>
+						<mailcampaigns_import_mailing_list_amount translate="label">
+                            <label>Aantal mailinglist entries per cron: </label>
+                            <comment>Het aantal mailinglist entries dat per cronrun gesynched wordt</comment>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>33</sort_order>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </mailcampaigns_import_mailing_list_amount>
+						<mailcampaigns_import_order_history translate="label">
+                            <label>Order historie importeren? </label>
+                            <comment>U kunt ervoor kiezen om de historie van orders mee te importeren</comment>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>34</sort_order>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </mailcampaigns_import_order_history>
+						<mailcampaigns_import_order_amount translate="label">
+                            <label>Aantal orders per cron: </label>
+                            <comment>Het aantal orders dat per cronrun gesynched wordt</comment>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>35</sort_order>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </mailcampaigns_import_order_amount>
+						<mailcampaigns_import_order_product_history translate="label">
+                            <label>Orderproduct historie importeren? </label>
+                            <comment>U kunt ervoor kiezen om de historie van orderproducten mee te importeren</comment>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>36</sort_order>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </mailcampaigns_import_order_product_history>
+						<mailcampaigns_import_order_product_amount translate="label">
+                            <label>Aantal orderproducten per cron: </label>
+                            <comment>Het aantal orderproducten dat per cronrun gesynched wordt</comment>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>37</sort_order>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </mailcampaigns_import_order_product_amount>
+						<mailcampaigns_import_products_history translate="label">
+                            <label>Alle producten importeren? </label>
+							<comment>U kunt ervoor kiezen om de historie van alle producten mee te importeren</comment>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>38</sort_order>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </mailcampaigns_import_products_history>
+						<mailcampaigns_import_products_history_amount translate="label">
+                            <label>Aantal producten per cron: </label>
+                            <comment>Het aantal producten dat per cronrun gesynched wordt</comment>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>39</sort_order>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </mailcampaigns_import_products_history_amount>		
+                    </fields>
+                </mailcampaigns_history_group>
+				
+				<mailcampaigns_tracking_code translate="label">
+                    <label>Tracking opties</label>
+                    <frontend_type>text</frontend_type>
+                    <sort_order>1003</sort_order>
+                    <show_in_default>0</show_in_default>
+                    <show_in_website>0</show_in_website>
+                    <show_in_store>1</show_in_store>
+                    <fields>
+						<mailcampaigns_tracking_code translate="label">
+                            <label>Tracking Code op elke pagina plaatsen?</label>
+                            <comment>Tracking Code op elke pagina plaatsen?</comment>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>22</sort_order>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </mailcampaigns_tracking_code>
+						<mailcampaigns_tracking_code_order_success translate="label">
+                            <label>Order Tracking Code op order success page plaatsen?</label>
+                            <comment>Order Tracking Code op order success page plaatsen?</comment>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>23</sort_order>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </mailcampaigns_tracking_code_order_success>
+                    </fields>
+                </mailcampaigns_tracking_code>
+				
+            </groups>
+        </mailcampaigns>
+    </sections>
+</config>

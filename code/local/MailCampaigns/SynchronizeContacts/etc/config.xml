@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<config>
+
+    <modules>
+        <MailCampaigns_SynchronizeContacts>
+            <version>1.4.0</version>
+        </MailCampaigns_SynchronizeContacts>
+    </modules>
+	<default>
+		<mailcampaigns>
+			<mailcampaigns_history_group>                
+				<mailcampaigns_import_mailing_list_amount>100</mailcampaigns_import_mailing_list_amount>
+				<mailcampaigns_import_customers_amount>100</mailcampaigns_import_customers_amount>
+				<mailcampaigns_import_order_amount>50</mailcampaigns_import_order_amount>
+				<mailcampaigns_import_order_product_amount>50</mailcampaigns_import_order_product_amount>
+				<mailcampaigns_import_products_history_amount>10</mailcampaigns_import_products_history_amount> 
+			</mailcampaigns_history_group>      
+		</mailcampaigns>
+	</default>
+	
+	<frontend>
+        <layout>
+            <updates>
+                <mailcampaigns_synchronizecontacts>
+                    <file>mailcampaigns_synchronizecontacts.xml</file>
+                </mailcampaigns_synchronizecontacts>
+            </updates>
+        </layout>
+    </frontend>
+	
+    <global>
+		<resources>
+			<mailcampaigns_setup>
+				<setup>
+					<module>MailCampaigns_SynchronizeContacts</module>
+				</setup>
+				<connection>
+					<use>core_setup</use>
+				</connection>
+			</mailcampaigns_setup>
+		</resources>
+		
+		<blocks>
+            <mailcampaigns_synchronizecontacts>
+                <class>MailCampaigns_SynchronizeContacts_Block</class>
+            </mailcampaigns_synchronizecontacts>
+        </blocks>
+		
+        <models>
+            <mailcampaigns_synchronizecontacts>
+                <class>MailCampaigns_SynchronizeContacts_Model</class>
+            </mailcampaigns_synchronizecontacts>
+        </models>
+
+        <events>
+		
+            <admin_system_config_changed_section_mailcampaigns>
+                <observers>
+                    <mailcampaigns_synchronizecontacts>
+                        <class>mailcampaigns_synchronizecontacts/observer</class>
+                        <method>SaveSettings</method>
+                        <type>singleton</type>
+                    </mailcampaigns_synchronizecontacts>
+                </observers>
+            </admin_system_config_changed_section_mailcampaigns>
+			
+			<newsletter_subscriber_save_after>
+                <observers>
+                    <mailcampaigns_synchronizecontacts>
+                        <class>mailcampaigns_synchronizecontacts/observer</class>
+                        <method>SynchronizeMailingEntry</method>
+                        <type>singleton</type>
+                    </mailcampaigns_synchronizecontacts>
+                </observers>
+            </newsletter_subscriber_save_after>
+			
+			<newsletter_subscriber_create_after>
+                <observers>
+                    <mailcampaigns_synchronizecontacts>
+                        <class>mailcampaigns_synchronizecontacts/observer</class>
+                        <method>SynchronizeMailingEntry</method>
+                        <type>singleton</type>
+                    </mailcampaigns_synchronizecontacts>
+                </observers>
+            </newsletter_subscriber_create_after>
+
+            <sales_order_place_after>
+                <observers>
+                    <mailcampaigns_synchronizecontacts>
+                        <class>mailcampaigns_synchronizecontacts/observer</class>
+                        <method>SynchronizeOrder</method>
+                        <type>singleton</type>
+                    </mailcampaigns_synchronizecontacts>
+                </observers>
+            </sales_order_place_after>
+			
+            <sales_order_save_after>
+                <observers>
+                    <mailcampaigns_synchronizecontacts>
+                        <class>mailcampaigns_synchronizecontacts/observer</class>
+                        <method>SynchronizeOrder</method>
+                        <type>singleton</type>
+                    </mailcampaigns_synchronizecontacts>
+                </observers>
+            </sales_order_save_after>
+			
+            <catalog_product_save_after>
+                <observers>
+                    <mailcampaigns_synchronizecontacts>
+                        <class>mailcampaigns_synchronizecontacts/observer</class>
+                        <method>SynchronizeProduct</method>
+                        <type>singleton</type>
+                    </mailcampaigns_synchronizecontacts>
+                </observers>
+            </catalog_product_save_after>
+			
+            <catalog_product_attribute_update_before>
+                <observers>
+                    <mailcampaigns_synchronizecontacts>
+                        <class>mailcampaigns_synchronizecontacts/observer</class>
+                        <method>SynchronizeProducts</method>
+                        <type>singleton</type>
+                    </mailcampaigns_synchronizecontacts>
+                </observers>
+            </catalog_product_attribute_update_before>
+			
+			<catalog_product_delete_before>
+                <observers>
+                    <mailcampaigns_synchronizecontacts>
+                        <class>mailcampaigns_synchronizecontacts/observer</class>
+                        <method>DeleteProduct</method>
+                        <type>singleton</type>
+                    </mailcampaigns_synchronizecontacts>
+                </observers>
+            </catalog_product_delete_before>
+
+            <customer_save_after>
+                <observers>
+                    <mailcampaigns_synchronizecontacts>
+                        <class>mailcampaigns_synchronizecontacts/observer</class>
+                        <method>SynchronizeContact</method>
+                        <type>singleton</type>
+                    </mailcampaigns_synchronizecontacts>
+                </observers>
+            </customer_save_after>
+			
+			<sales_quote_save_after>
+                <observers>
+                    <mailcampaigns_synchronizecontacts>
+                        <class>mailcampaigns_synchronizecontacts/observer</class>
+                        <method>SynchronizeQuote</method>
+                        <type>singleton</type>
+                    </mailcampaigns_synchronizecontacts>
+                </observers>
+            </sales_quote_save_after>
+			
+			<sales_quote_remove_item>
+                <observers>
+                    <mailcampaigns_synchronizecontacts>
+                        <class>mailcampaigns_synchronizecontacts/observer</class>
+                        <method>SynchronizeQuoteDeleteItem</method>
+                        <type>singleton</type>
+                    </mailcampaigns_synchronizecontacts>
+                </observers>
+            </sales_quote_remove_item>	
+
+        </events>
+    </global>
+	
+	<crontab>
+		<jobs>
+			<mailcampaigns_synchronizecontacts>
+				<schedule><cron_expr>* * * * *</cron_expr></schedule>
+				<run><model>mailcampaigns_synchronizecontacts/observer::ProcessCrons</model></run>
+			</mailcampaigns_synchronizecontacts>
+		</jobs>
+	</crontab>
+
+	<adminhtml>
+		<acl>
+			<resources>
+				<all>
+					<title>Allow Everything</title>
+				</all>
+				<admin>
+					<children>
+						<system>
+							<children>
+								<config>
+									<children>
+										<mailcampaigns>
+											<title>MailCampaigns - All</title>
+										</mailcampaigns>
+									</children>
+								</config>
+							</children>
+						</system>
+					</children>
+				</admin>
+			</resources>
+		</acl>
+	</adminhtml>
+
+</config>

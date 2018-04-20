@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<layout version="0.1.0">
+
+    <checkout_onepage_success>
+        <reference name="content">
+            <block type="mailcampaigns_synchronizecontacts/success" name="mailcampaigns_synchronizecontacts.success" template="mailcampaigns/success.phtml"/>
+        </reference>
+    </checkout_onepage_success>
+
+    <checkout_multishipping_success>
+        <reference name="content">
+            <block type="mailcampaigns_synchronizecontacts/success" name="mailcampaigns_synchronizecontacts.success" template="mailcampaigns/success.phtml"/>
+        </reference>
+    </checkout_multishipping_success>
+	
+	<default>
+        <reference name="before_body_end">
+            <block type="mailcampaigns_synchronizecontacts/footer" name="mailcampaigns_synchronizecontacts.footer" template="mailcampaigns/footer.phtml"/>
+        </reference>
+    </default>
+
+</layout>
