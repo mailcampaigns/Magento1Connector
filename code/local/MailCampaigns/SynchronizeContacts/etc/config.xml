@@ -145,7 +145,8 @@
                 </observers>
             </customer_save_after>
 			
-			<!--<sales_quote_save_after>
+			
+			<sales_quote_save_after>
                 <observers>
                     <mailcampaigns_synchronizecontacts>
                         <class>mailcampaigns_synchronizecontacts/observer</class>
@@ -154,7 +155,8 @@
                     </mailcampaigns_synchronizecontacts>
                 </observers>
             </sales_quote_save_after>
-						
+			
+			<!--			
 			<sales_quote_product_add_after>
                 <observers>
                     <mailcampaigns_synchronizecontacts>
@@ -164,7 +166,6 @@
                     </mailcampaigns_synchronizecontacts>
                 </observers>
             </sales_quote_product_add_after>	
-			-->
 			
 			<sales_quote_item_qty_set_after>
                 <observers>
@@ -174,7 +175,8 @@
                         <type>singleton</type>
                     </mailcampaigns_synchronizecontacts>
                 </observers>
-            </sales_quote_item_qty_set_after>	
+            </sales_quote_item_qty_set_after>
+			-->
 			
 			<sales_quote_remove_item>
                 <observers>
