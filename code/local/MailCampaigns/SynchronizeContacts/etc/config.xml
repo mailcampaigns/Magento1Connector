@@ -4,7 +4,7 @@
 
     <modules>
         <MailCampaigns_SynchronizeContacts>
-            <version>1.4.1</version>
+            <version>1.4.2</version>
         </MailCampaigns_SynchronizeContacts>
     </modules>
 	<default>
@@ -155,23 +155,24 @@
                     </mailcampaigns_synchronizecontacts>
                 </observers>
             </sales_quote_save_after>
-			
-			<!--			
+						
+			<!--
 			<sales_quote_product_add_after>
                 <observers>
                     <mailcampaigns_synchronizecontacts>
                         <class>mailcampaigns_synchronizecontacts/observer</class>
-                        <method>SynchronizeQuote</method>
+                        <method>SynchronizeQuoteUpdateItem</method>
                         <type>singleton</type>
                     </mailcampaigns_synchronizecontacts>
                 </observers>
             </sales_quote_product_add_after>	
 			
+			
 			<sales_quote_item_qty_set_after>
                 <observers>
                     <mailcampaigns_synchronizecontacts>
                         <class>mailcampaigns_synchronizecontacts/observer</class>
-                        <method>SynchronizeQuote</method>
+                        <method>SynchronizeQuoteUpdateItem</method>
                         <type>singleton</type>
                     </mailcampaigns_synchronizecontacts>
                 </observers>

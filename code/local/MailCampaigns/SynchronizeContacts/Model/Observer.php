@@ -677,6 +677,43 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 		}
 	}
 	
+	public function SynchronizeQuoteUpdateItem(Varien_Event_Observer $observer)
+	{
+		try
+		{
+			$items = $observer->getItems();
+			foreach ($items as $item) 
+			{					
+				$quote_item = $item->getData();
+				
+				$product_id = $quote_item["product_id"];
+				$quote_id 	= $quote_item["quote_id"];
+				$store_id 	= $quote_item["store_id"];
+				$qty 		= $quote_item["qty"];
+				$price 		= $item->getPrice();
+				$item_id 	= 0;
+				
+				$product = Mage::getModel('catalog/product')->setStoreId( $store_id )->load($product_id);
+				$price = $product->getFinalPrice();  
+				
+				$data = array();
+				$data[0] = array("product_id" => $product_id, "quote_id" => $quote_id, "store_id" => $store_id, "qty" => $qty, "price" => $price, "item_id" => $item_id);	
+					
+				$mcAPI 				= new MailCampaigns_API();
+				$mcAPI->APIStoreID 	= $store_id;
+				$mcAPI->APIKey 		= Mage::getStoreConfig('mailcampaigns/mailcampaigns_group/mailcampaigns_api_key',$mcAPI->APIStoreID);
+				$mcAPI->APIToken 	= Mage::getStoreConfig('mailcampaigns/mailcampaigns_group/mailcampaigns_api_usertoken',$mcAPI->APIStoreID);	
+				$mcAPI->ImportQuotes = Mage::getStoreConfig('mailcampaigns/mailcampaigns__syncoptions_group/mailcampaigns_import_quotes',$mcAPI->APIStoreID);	
+			
+				$mcAPI->QueueAPICall("update_magento_abandonded_cart_products", $data);	
+			}
+		} 
+		catch (Exception $e) 
+		{ 
+			$mcAPI->DebugCall($e->getMessage());
+		}
+	}
+	
 	public function SynchronizeQuoteDeleteItem(Varien_Event_Observer $observer)
 	{
 		try
@@ -697,7 +734,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 			{
 				// delete abandonded carts quote items
 				$data = array("item_id" => $item_id, "store_id" => $store_id, "quote_id" => $quote_id);
-				$response = $mcAPI->QueueAPICall("delete_magento_abandonded_cart_product", $data);	
+				$mcAPI->QueueAPICall("delete_magento_abandonded_cart_product", $data);	
 			}
 		} 
 		catch (Exception $e) 
