@@ -18,7 +18,7 @@
 
 class MailCampaigns_SynchronizeContacts_Model_Observer
 {
-	public $version = '1.4.1';
+	public $version = '1.4.3';
 	
 	public function ProcessCrons()
 	{
@@ -358,6 +358,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 				
 				// order items
 				$connection = Mage::getSingleton('core/resource')->getConnection('core_read');
+				
 				$sql        = "SELECT o.entity_id as order_id, o.store_id, oi.product_id as product_id, oi.qty_ordered, oi.price, oi.name, oi.sku, o.customer_id
 				FROM `".$tn__sales_flat_order."` AS o
 				INNER JOIN `".$tn__sales_flat_order_item."` AS oi ON oi.order_id = o.entity_id
@@ -374,17 +375,12 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 					
 					// get categories			
 					$categories = array();
-					$sql_cat        = "select cc.value from ".$tn__catalog_category_product." as pi
-					JOIN ".$tn__catalog_category_entity_varchar." cc ON cc.entity_id = pi.category_id
-					JOIN ".$tn__eav_entity_type." ee ON cc.entity_type_id = ee.entity_type_id
-					JOIN ".$tn__catalog_category_entity." cce ON cc.entity_id = cce.entity_id
-					WHERE cc.attribute_id =  '41' AND ee.entity_model =  'catalog/category' AND pi.product_id = ".$row["product_id"]."";
-					$rows_cat       = $connection->fetchAll($sql_cat);
-					foreach ($rows_cat as $row_cat)
+					$product = Mage::getModel('catalog/product')->load($row["product_id"]);
+					foreach ($product->getCategoryIds() as $category_id) 
 					{
-						$categories[] = $row_cat["value"];
+						$categories[] = Mage::getModel('catalog/category')->load($category_id)->getName();
 					}
-					$mc_import_data[$i]["categories"] = implode("|", $categories);
+					$mc_import_data[$i]["categories"] = implode("|", array_unique($categories)); 
 					
 					$i++;
 				}	
@@ -423,7 +419,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 				$mcAPI->APIKey 		= Mage::getStoreConfig('mailcampaigns/mailcampaigns_group/mailcampaigns_api_key',$mcAPI->APIStoreID);
 				$mcAPI->APIToken 	= Mage::getStoreConfig('mailcampaigns/mailcampaigns_group/mailcampaigns_api_usertoken',$mcAPI->APIStoreID);	
 				$mcAPI->ImportProducts = Mage::getStoreConfig('mailcampaigns/mailcampaigns__syncoptions_group/mailcampaigns_import_products',$mcAPI->APIStoreID);	
-				
+								
 				if ($mcAPI->ImportProducts == 1 && $mcAPI->APIKey != "" && $mcAPI->APIToken != "" && $mcAPI->APIStoreID > 0)
 				{
 					$product = Mage::getModel('catalog/product')->setStoreId( $_storeId )->load($product->getId());
@@ -454,6 +450,14 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 					
 					// store id
 					$product_data[$i]["store_id"] = $_storeId; //implode(",",$product->getStoreIds());
+					
+					// get categories			
+					$categories = array();
+					foreach ($product->getCategoryIds() as $category_id) 
+					{
+						$categories[] = Mage::getModel('catalog/category')->load($category_id)->getName();
+					}
+					$product_data[$i]["categories"] = implode("|", array_unique($categories)); 
 					
 					// get related products
 					/*$related_product_collection = $product->getRelatedProductIds();
@@ -529,6 +533,14 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 						
 						// store id
 						$product_data[$i]["store_id"] = $_storeId; //implode(",",$product->getStoreIds());
+						
+						// get categories			
+						$categories = array();
+						foreach ($product->getCategoryIds() as $category_id) 
+						{
+							$categories[] = Mage::getModel('catalog/category')->load($category_id)->getName();
+						}
+						$product_data[$i]["categories"] = implode("|", array_unique($categories)); 
 						
 						// get related products
 						/*$related_product_collection = $product->getRelatedProductIds();
@@ -705,7 +717,10 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 				$mcAPI->APIToken 	= Mage::getStoreConfig('mailcampaigns/mailcampaigns_group/mailcampaigns_api_usertoken',$mcAPI->APIStoreID);	
 				$mcAPI->ImportQuotes = Mage::getStoreConfig('mailcampaigns/mailcampaigns__syncoptions_group/mailcampaigns_import_quotes',$mcAPI->APIStoreID);	
 			
-				$mcAPI->QueueAPICall("update_magento_abandonded_cart_products", $data);	
+				if ($mcAPI->ImportQuotes == 1 && $mcAPI->APIKey != "" && $mcAPI->APIToken != "" && $mcAPI->APIStoreID > 0)
+				{
+					$mcAPI->QueueAPICall("update_magento_abandonded_cart_products", $data);	
+				}
 			}
 		} 
 		catch (Exception $e) 
@@ -1007,6 +1022,14 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 							// store id
 							$product_data[$i]["store_id"] = $mcAPI->APIStoreID;
 							
+							// get categories
+							$categories = array();
+							foreach ($product->getCategoryIds() as $category_id) 
+							{
+								$categories[] = Mage::getModel('catalog/category')->load($category_id)->getName();
+							}
+							$product_data[$i]["categories"] = implode("|", array_unique($categories)); 
+							
 							// get related products
 							/*
 							$related_product_collection = $product->getRelatedProductIds();
@@ -1129,15 +1152,12 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 						{
 							try
 							{
-								$sql_cat        = "select cc.value from ".$tn__catalog_category_product." as pi
-								JOIN ".$tn__catalog_category_entity_varchar." cc ON cc.entity_id = pi.category_id
-								JOIN ".$tn__eav_entity_type." ee ON cc.entity_type_id = ee.entity_type_id
-								JOIN ".$tn__catalog_category_entity." cce ON cc.entity_id = cce.entity_id
-								WHERE cc.attribute_id =  '41' AND ee.entity_model =  'catalog/category' AND pi.product_id = ".$tmp_row["product_id"]."";
-								$rows_cat       = $connection_read->fetchAll($sql_cat);
-								foreach ($rows_cat as $row_cat)
+								// get categories			
+								$categories = array();
+								$product = Mage::getModel('catalog/product')->load($tmp_row["product_id"]);
+								foreach ($product->getCategoryIds() as $category_id) 
 								{
-									$categories[] = $row_cat["value"];
+									$categories[] = Mage::getModel('catalog/category')->load($category_id)->getName();
 								}
 							}
 							catch (Exception $e) 
@@ -1146,7 +1166,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 							}
 						}
 						
-						$mc_import_data[$i]["categories"] = implode("|", $categories);
+						$mc_import_data[$i]["categories"] = implode("|", array_unique($categories));
 						$i++;
 					}	
 				} 

@@ -4,7 +4,7 @@
 
     <modules>
         <MailCampaigns_SynchronizeContacts>
-            <version>1.4.2</version>
+            <version>1.4.3</version>
         </MailCampaigns_SynchronizeContacts>
     </modules>
 	<default>
@@ -144,7 +144,6 @@
                     </mailcampaigns_synchronizecontacts>
                 </observers>
             </customer_save_after>
-			
 			
 			<sales_quote_save_after>
                 <observers>

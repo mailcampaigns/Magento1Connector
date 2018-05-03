@@ -1,7 +1,7 @@
 {
     "name": "mailcampaigns/magento1connector",
     "description": "Magento 1 Connector for MailCampaigns",
-    "version": "1.4.2",
+    "version": "1.4.3",
     "keywords": ["magento", "mailcampaigns", "connector"],
     "require": {
         "php": ">=5.3.0",
