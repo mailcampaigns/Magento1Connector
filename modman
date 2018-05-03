@@ -1,0 +1,8 @@
+# app/code
+code/local/MailCampaigns/SynchronizeContacts            app/code/local/MailCampaigns/SynchronizeContacts
+# app/etc
+etc/modules/MailCampaigns_SynchronizeContacts.xml            app/etc/modules/MailCampaigns_SynchronizeContacts.xml
+# app/design
+design/frontend/base/default/layout/mailcampaigns_synchronizecontacts.xml            app/design/frontend/base/default/layout/mailcampaigns_synchronizecontacts.xml
+design/frontend/base/default/template/mailcampaigns/footer.phtml            app/design/frontend/base/default/template/mailcampaigns/footer.phtml
+design/frontend/base/default/template/mailcampaigns/success.phtml            app/design/frontend/base/default/template/mailcampaigns/success.phtml
