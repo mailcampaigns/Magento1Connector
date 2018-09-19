@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
     <name>MailCampaigns</name>
-    <version>1.4.4</version>
+    <version>1.4.5</version>
     <stability>stable</stability>
     <license>GNU General Public License (GPL)</license>
     <channel>community</channel>
@@ -81,7 +81,10 @@ Added in version 1.4.2&#xD;
 - Changed events for abandonded cart&#xD;
 &#xD;
 Added in version 1.4.4&#xD;
-- Changed events for abandonded cart</notes>
+- Changed events for abandonded cart
+&#xD;
+Added in version 1.4.5&#xD;
+- Added support for extra Guest Order shipping address fields - Added support to gather Parent ID of child products</notes>
     <authors><author><name>Wouter Steenkist</name><user>mailcampaigns</user><email>wouter@mailcampaigns.nl</email></author></authors>
     <date>2018-05-17</date>
     <time>06:57:46</time>
