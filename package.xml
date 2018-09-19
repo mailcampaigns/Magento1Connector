@@ -1,0 +1,91 @@
+<?xml version="1.0"?>
+<package>
+    <name>MailCampaigns</name>
+    <version>1.4.4</version>
+    <stability>stable</stability>
+    <license>GNU General Public License (GPL)</license>
+    <channel>community</channel>
+    <extends/>
+    <summary>De MailCampaigns Magento Connector zorgt voor een optimale integratie tussen MailCampaigns en uw Magento webshop.</summary>
+    <description>De MailCampaigns Magento Connector synchroniseert gegevens uit je webshop met MailCampaigns om het zo makkelijk mogelijk te maken om e-mailings te versturen en contactgegevens up-to-date te houden. Laat MailCampaigns je contacten verrijken met nieuwe gegevens op basis van hun gedrag en klikhistorie.</description>
+    <notes>Added in version 0.1.9:&#xD;
+- support for multistore/view products&#xD;
+- support for multiple images per product&#xD;
+&#xD;
+Added in version 1.0.1:&#xD;
+- separation of store configs; it is possible to connect different MailCampaigns accounts to one Magento environment but to multiple stores.&#xD;
+&#xD;
+Added in version 1.0.2:&#xD;
+- More efficient memory usage&#xD;
+&#xD;
+Added in version 1.1.1&#xD;
+- Import order history with option&#xD;
+&#xD;
+Added in version 1.1.2&#xD;
+- Import products with option&#xD;
+- Import order product categories&#xD;
+&#xD;
+Added in version 1.1.3&#xD;
+- You can set which items should be synchronized and imported.&#xD;
+&#xD;
+Added in version 1.1.4&#xD;
+- You can set which items should be synchronized OR imported.&#xD;
+&#xD;
+Added in version 1.1.5&#xD;
+- Bugfix history import&#xD;
+&#xD;
+Added in version 1.1.6&#xD;
+- Added support for Magento issue: customers and mailing list entries with store_id = 0&#xD;
+&#xD;
+Added in version 1.1.7&#xD;
+- Added support for Magento issue: order history with store_id = 0&#xD;
+&#xD;
+Added in version 1.1.8&#xD;
+- Billing address information of customers&#xD;
+&#xD;
+Added in version 1.1.9&#xD;
+- Splitted order products history&#xD;
+&#xD;
+Added in version 1.2.0&#xD;
+- MailCampaigns API server separated from MailCampaigns Applications to be independent the availability of the main application.&#xD;
+&#xD;
+Added in version 1.3.0&#xD;
+- Added MailCampaigns Queuing System to detach Magento directly from MailCampaigns. Running Magento cronjobs is required.&#xD;
+&#xD;
+Added in version 1.3.1&#xD;
+- Added optional order tracking code on success page.&#xD;
+&#xD;
+Added in version 1.3.2&#xD;
+- Bulk import has been changed to a more sophisticated model to generate less server load and timeouts.&#xD;
+- Bugfix for table error message when sync products is disabled.&#xD;
+&#xD;
+Added in version 1.3.3&#xD;
+- Memory reservation removed&#xD;
+&#xD;
+Added in version 1.3.4&#xD;
+- Insert method updated and error timeout increased to 24 hours&#xD;
+&#xD;
+Added in version 1.3.5&#xD;
+- Bug fix importing data into temp tables&#xD;
+&#xD;
+Added in version 1.3.6&#xD;
+- Bug fix tables names when using prefixes&#xD;
+- Tracking code included for page tracking&#xD;
+- Configuration of module can be derived from website and default configuration.&#xD;
+&#xD;
+Added in version 1.4.0&#xD;
+- Changed queue handling&#xD;
+- User configurable parameters for bulk import data&#xD;
+&#xD;
+Added in version 1.4.2&#xD;
+- Changed events for abandonded cart&#xD;
+&#xD;
+Added in version 1.4.4&#xD;
+- Changed events for abandonded cart</notes>
+    <authors><author><name>Wouter Steenkist</name><user>mailcampaigns</user><email>wouter@mailcampaigns.nl</email></author></authors>
+    <date>2018-05-17</date>
+    <time>06:57:46</time>
+    <contents><target name="magelocal"><dir name="MailCampaigns"><dir name="SynchronizeContacts"><dir name="Block"><file name="Footer.php" hash="26955f02f82c978c69e7a33a83fca95b"/><file name="Success.php" hash="bcbb85d38792ccfde599fa8f029ac219"/></dir><dir name="Model"><file name="Observer.php" hash="61164914fb2e0ad57bdb7dc8677d157f"/></dir><dir name="etc"><file name="config.xml" hash="b94c5a2ab28b86879632bf8c42dc2edb"/><file name="system.xml" hash="def655f435f254ce4cc8bc64bca0a6c4"/></dir><dir name="sql"><dir name="mailcampaigns_setup"><file name="install-1.4.4.php" hash="f93028d3c77c65add34d68e09828bbfb"/></dir></dir></dir><file name=".DS_Store" hash="bd25017dc3e872850ba8b1aee0b94067"/></dir></target><target name="mageetc"><dir name="modules"><file name="MailCampaigns_SynchronizeContacts.xml" hash="3c924cf9807eeb3f35d770b216342a8c"/></dir></target><target name="magedesign"><dir name="frontend"><dir name="base"><dir name="default"><dir name="layout"><file name="mailcampaigns_synchronizecontacts.xml" hash="25564ad6f665a648095e155e7e61a63e"/></dir><dir name="template"><dir name="mailcampaigns"><file name="footer.phtml" hash="181d51f3c970a991098bf1ee77f1cc61"/><file name="success.phtml" hash="181d51f3c970a991098bf1ee77f1cc61"/></dir></dir></dir></dir></dir></target></contents>
+    <compatible/>
+    <dependencies><required><php><min>5.0.0</min><max>7.1.0</max></php><package><name>Mage_Core_Modules</name><channel>community</channel><min>1.6.0.0</min><max>1.9</max></package></required></dependencies>
+</package>

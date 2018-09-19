@@ -4,21 +4,21 @@
 
     <modules>
         <MailCampaigns_SynchronizeContacts>
-            <version>1.4.4</version>
+            <version>1.4.5</version>
         </MailCampaigns_SynchronizeContacts>
     </modules>
 	<default>
 		<mailcampaigns>
-			<mailcampaigns_history_group>                
+			<mailcampaigns_history_group>
 				<mailcampaigns_import_mailing_list_amount>100</mailcampaigns_import_mailing_list_amount>
 				<mailcampaigns_import_customers_amount>100</mailcampaigns_import_customers_amount>
 				<mailcampaigns_import_order_amount>50</mailcampaigns_import_order_amount>
 				<mailcampaigns_import_order_product_amount>50</mailcampaigns_import_order_product_amount>
-				<mailcampaigns_import_products_history_amount>10</mailcampaigns_import_products_history_amount> 
-			</mailcampaigns_history_group>      
+				<mailcampaigns_import_products_history_amount>10</mailcampaigns_import_products_history_amount>
+			</mailcampaigns_history_group>
 		</mailcampaigns>
 	</default>
-	
+
 	<frontend>
         <layout>
             <updates>
@@ -28,7 +28,7 @@
             </updates>
         </layout>
     </frontend>
-	
+
     <global>
 		<resources>
 			<mailcampaigns_setup>
@@ -40,13 +40,13 @@
 				</connection>
 			</mailcampaigns_setup>
 		</resources>
-		
+
 		<blocks>
             <mailcampaigns_synchronizecontacts>
                 <class>MailCampaigns_SynchronizeContacts_Block</class>
             </mailcampaigns_synchronizecontacts>
         </blocks>
-		
+
         <models>
             <mailcampaigns_synchronizecontacts>
                 <class>MailCampaigns_SynchronizeContacts_Model</class>
@@ -54,7 +54,7 @@
         </models>
 
         <events>
-		
+
             <admin_system_config_changed_section_mailcampaigns>
                 <observers>
                     <mailcampaigns_synchronizecontacts>
@@ -64,7 +64,7 @@
                     </mailcampaigns_synchronizecontacts>
                 </observers>
             </admin_system_config_changed_section_mailcampaigns>
-			
+
 			<newsletter_subscriber_save_after>
                 <observers>
                     <mailcampaigns_synchronizecontacts>
@@ -74,7 +74,7 @@
                     </mailcampaigns_synchronizecontacts>
                 </observers>
             </newsletter_subscriber_save_after>
-			
+
 			<newsletter_subscriber_create_after>
                 <observers>
                     <mailcampaigns_synchronizecontacts>
@@ -94,7 +94,7 @@
                     </mailcampaigns_synchronizecontacts>
                 </observers>
             </sales_order_place_after>
-			
+
             <sales_order_save_after>
                 <observers>
                     <mailcampaigns_synchronizecontacts>
@@ -104,7 +104,7 @@
                     </mailcampaigns_synchronizecontacts>
                 </observers>
             </sales_order_save_after>
-			
+
             <catalog_product_save_after>
                 <observers>
                     <mailcampaigns_synchronizecontacts>
@@ -114,7 +114,7 @@
                     </mailcampaigns_synchronizecontacts>
                 </observers>
             </catalog_product_save_after>
-			
+
             <catalog_product_attribute_update_before>
                 <observers>
                     <mailcampaigns_synchronizecontacts>
@@ -124,7 +124,7 @@
                     </mailcampaigns_synchronizecontacts>
                 </observers>
             </catalog_product_attribute_update_before>
-			
+
 			<catalog_product_delete_before>
                 <observers>
                     <mailcampaigns_synchronizecontacts>
@@ -144,7 +144,7 @@
                     </mailcampaigns_synchronizecontacts>
                 </observers>
             </customer_save_after>
-			
+
 			<sales_quote_save_after>
                 <observers>
                     <mailcampaigns_synchronizecontacts>
@@ -154,7 +154,7 @@
                     </mailcampaigns_synchronizecontacts>
                 </observers>
             </sales_quote_save_after>
-						
+
 			<sales_quote_product_add_after>
                 <observers>
                     <mailcampaigns_synchronizecontacts>
@@ -163,8 +163,8 @@
                         <type>singleton</type>
                     </mailcampaigns_synchronizecontacts>
                 </observers>
-            </sales_quote_product_add_after>	
-			
+            </sales_quote_product_add_after>
+
 			<sales_quote_item_qty_set_after>
                 <observers>
                     <mailcampaigns_synchronizecontacts>
@@ -174,7 +174,7 @@
                     </mailcampaigns_synchronizecontacts>
                 </observers>
             </sales_quote_item_qty_set_after>
-			
+
 			<sales_quote_remove_item>
                 <observers>
                     <mailcampaigns_synchronizecontacts>
@@ -183,11 +183,11 @@
                         <type>singleton</type>
                     </mailcampaigns_synchronizecontacts>
                 </observers>
-            </sales_quote_remove_item>	
+            </sales_quote_remove_item>
 
         </events>
     </global>
-	
+
 	<crontab>
 		<jobs>
 			<mailcampaigns_synchronizecontacts>

@@ -2,7 +2,7 @@
 <config>
     <tabs>
         <mailcampaigns translate="label">
-            <label>MailCampaigns (v1.4.4)</label>
+            <label>MailCampaigns (v1.4.5)</label>
             <sort_order>100</sort_order>
         </mailcampaigns>
     </tabs>
@@ -43,7 +43,7 @@
                         </mailcampaigns_api_usertoken>
                     </fields>
                 </mailcampaigns_group>
-				
+
 				<mailcampaigns__syncoptions_group translate="label">
                     <label>Synchronisatie Configuratie</label>
                     <frontend_type>text</frontend_type>
@@ -104,7 +104,7 @@
                         </mailcampaigns_import_quotes>
                     </fields>
                 </mailcampaigns__syncoptions_group>
-				
+
 				<mailcampaigns_history_group translate="label">
                     <label>Historie importeer opties</label>
                     <frontend_type>text</frontend_type>
@@ -207,10 +207,10 @@
                             <show_in_default>0</show_in_default>
                             <show_in_website>0</show_in_website>
                             <show_in_store>1</show_in_store>
-                        </mailcampaigns_import_products_history_amount>		
+                        </mailcampaigns_import_products_history_amount>
                     </fields>
                 </mailcampaigns_history_group>
-				
+
 				<mailcampaigns_tracking_code translate="label">
                     <label>Tracking opties</label>
                     <frontend_type>text</frontend_type>
@@ -241,7 +241,7 @@
                         </mailcampaigns_tracking_code_order_success>
                     </fields>
                 </mailcampaigns_tracking_code>
-				
+
             </groups>
         </mailcampaigns>
     </sections>
