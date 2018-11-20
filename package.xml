@@ -84,7 +84,10 @@ Added in version 1.4.4&#xD;
 - Changed events for abandonded cart
 &#xD;
 Added in version 1.4.5&#xD;
-- Added support for extra Guest Order shipping address fields - Added support to gather Parent ID of child products</notes>
+- Added support for extra Guest Order shipping address fields - Added support to gather Parent ID of child products
+&#xD;
+Added in version 1.4.6&#xD;
+- Added support for category names and ids.</notes>
     <authors><author><name>Wouter Steenkist</name><user>mailcampaigns</user><email>wouter@mailcampaigns.nl</email></author></authors>
     <date>2018-05-17</date>
     <time>06:57:46</time>

@@ -18,7 +18,7 @@
 
 class MailCampaigns_SynchronizeContacts_Model_Observer
 {
-	public $version = '1.4.5';
+	public $version = '1.4.6';
 
 	public function ProcessCrons()
 	{
@@ -387,14 +387,14 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 						if (!is_numeric($key)) $mc_import_data[$i][$key] = $value;
 					}
 
-					// get categories
+					// get category names
 					$categories = array();
 					$product = Mage::getModel('catalog/product')->load($row["product_id"]);
 					foreach ($product->getCategoryIds() as $category_id)
 					{
 						$categories[] = Mage::getModel('catalog/category')->load($category_id)->getName();
 					}
-					$mc_import_data[$i]["categories"] = implode("|", array_unique($categories));
+					$mc_import_data[$i]["categories"] = json_encode(array_unique($categories));
 
 					$i++;
 				}
@@ -420,6 +420,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 
 			$product_data = array();
 			$related_products = array();
+			$category_data = array();
 			$i = 0;
 
 			$allStores = Mage::app()->getStores();
@@ -469,9 +470,10 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 					$categories = array();
 					foreach ($product->getCategoryIds() as $category_id)
 					{
-						$categories[] = Mage::getModel('catalog/category')->load($category_id)->getName();
+						$categories[] = $category_id;
+						$category_data[$category_id] = Mage::getModel('catalog/category')->load($category_id)->getName();
 					}
-					$product_data[$i]["categories"] = implode("|", array_unique($categories));
+					$product_data[$i]["categories"] = json_encode(array_unique($categories));
 
 					// get parent id
 					$parent_id = 0;
@@ -505,6 +507,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 					$i++;
 
 					// post data
+					$response = $mcAPI->QueueAPICall("update_magento_categories", $category_data);
 					$response = $mcAPI->QueueAPICall("update_magento_products", $product_data);
 					if (sizeof($related_products) > 0)
 					{
@@ -528,6 +531,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 			$i = 0;
 			$product_data = array();
 			$related_products = array();
+			$category_data = array();
 
 			$products = $observer->getEvent()->product_ids;
 
@@ -537,11 +541,11 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 				$_storeId = Mage::app()->getStore($_eachStoreId)->getId();
 
 				// Create MailCampaigns API Class Object
-				$mcAPI 				= new MailCampaigns_API();
-				$mcAPI->APIStoreID 	= $_storeId;
-				$mcAPI->APIKey 		= Mage::getStoreConfig('mailcampaigns/mailcampaigns_group/mailcampaigns_api_key',$mcAPI->APIStoreID);
-				$mcAPI->APIToken 	= Mage::getStoreConfig('mailcampaigns/mailcampaigns_group/mailcampaigns_api_usertoken',$mcAPI->APIStoreID);
-				$mcAPI->ImportProducts = Mage::getStoreConfig('mailcampaigns/mailcampaigns__syncoptions_group/mailcampaigns_import_products',$mcAPI->APIStoreID);
+				$mcAPI 					= new MailCampaigns_API();
+				$mcAPI->APIStoreID 		= $_storeId;
+				$mcAPI->APIKey 			= Mage::getStoreConfig('mailcampaigns/mailcampaigns_group/mailcampaigns_api_key',$mcAPI->APIStoreID);
+				$mcAPI->APIToken 		= Mage::getStoreConfig('mailcampaigns/mailcampaigns_group/mailcampaigns_api_usertoken',$mcAPI->APIStoreID);
+				$mcAPI->ImportProducts 	= Mage::getStoreConfig('mailcampaigns/mailcampaigns__syncoptions_group/mailcampaigns_import_products',$mcAPI->APIStoreID);
 
 				if ($mcAPI->ImportProducts == 1 && $mcAPI->APIKey != "" && $mcAPI->APIToken != "" && $mcAPI->APIStoreID > 0)
 				{
@@ -577,9 +581,10 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 						$categories = array();
 						foreach ($product->getCategoryIds() as $category_id)
 						{
-							$categories[] = Mage::getModel('catalog/category')->load($category_id)->getName();
+							$categories[] = $category_id;
+							$category_data[$category_id] = Mage::getModel('catalog/category')->load($category_id)->getName();
 						}
-						$product_data[$i]["categories"] = implode("|", array_unique($categories));
+						$product_data[$i]["categories"] = json_encode(array_unique($categories));
 
 						// get parent id
 						$parent_id = 0;
@@ -613,6 +618,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 						$i++;
 					}
 
+					$response = $mcAPI->QueueAPICall("update_magento_categories", $category_data);
 					$response = $mcAPI->QueueAPICall("update_magento_products", $product_data);
 					if (sizeof($related_products) > 0)
 					{
@@ -1068,6 +1074,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 				// loop trough all products for this store
 				$product_data = array();
 				$related_products = array();
+				$category_data = array();
 				$i = 0;
 				$productsCollection = Mage::getModel('catalog/product')->setStoreId( $mcAPI->APIStoreID )->setOrder('entity_id', 'ASC')->getCollection();//->addStoreFilter($mcAPI->APIStoreID);
 				$productsCollection->setPageSize($mcAPI->ImportProductsHistoryAmount);
@@ -1113,9 +1120,10 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 							$categories = array();
 							foreach ($product->getCategoryIds() as $category_id)
 							{
-								$categories[] = Mage::getModel('catalog/category')->load($category_id)->getName();
+								$categories[] = $category_id;
+								$category_data[$category_id] = Mage::getModel('catalog/category')->load($category_id)->getName();
 							}
-							$product_data[$i]["categories"] = implode("|", array_unique($categories));
+							$product_data[$i]["categories"] = json_encode(array_unique($categories));
 
 							// get parent id
 							$parent_id = 0;
@@ -1155,6 +1163,9 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 					}
 				}
 
+				$response = $mcAPI->QueueAPICall("update_magento_categories", $category_data, 0);
+				unset($category_data);
+				
 				$response = $mcAPI->QueueAPICall("update_magento_products", $product_data, 0);
 				unset($product_data);
 
@@ -1229,6 +1240,9 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 
 			if ($row["collection"] == "sales/order/products")
 			{
+				$category_data = array();
+				$mc_import_data = array();
+				
 				// Get table names
 				$tn__sales_flat_quote 					= Mage::getSingleton('core/resource')->getTableName('sales_flat_quote');
 				$tn__sales_flat_order 					= Mage::getSingleton('core/resource')->getTableName('sales_flat_order');
@@ -1279,7 +1293,8 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 								$product = Mage::getModel('catalog/product')->load($tmp_row["product_id"]);
 								foreach ($product->getCategoryIds() as $category_id)
 								{
-									$categories[] = Mage::getModel('catalog/category')->load($category_id)->getName();
+									$categories[] = $category_id;
+									$category_data[$category_id] = Mage::getModel('catalog/category')->load($category_id)->getName();
 								}
 							}
 							catch (Exception $e)
@@ -1298,10 +1313,8 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 				}
 
 				// post items
+				$response = $mcAPI->QueueAPICall("update_magento_categories", $category_data, 0);
 				$response = $mcAPI->QueueAPICall("update_magento_order_products", $mc_import_data);
-
-				// clear
-				$mc_import_data = array();
 			}
 
 			// Remove job if finished
@@ -1389,7 +1402,7 @@ class MailCampaigns_API
 		{
 			try
 			{
-				$response = file_get_contents('https://api.mailcampaigns.nl/api/v1.1/rest',null,stream_context_create(array(
+				$response = file_get_contents('https://dev.api.mailcampaigns.nl/api/v1.1/rest',null,stream_context_create(array(
 					'http' => array(
 						'protocol_version' => 1.1,
 						'method'           => 'POST',
@@ -1410,7 +1423,7 @@ class MailCampaigns_API
 		{
 			try
 			{
-				$response = file_get_contents('https://api.mailcampaigns.nl/api/v1.1/rest',null,stream_context_create(array(
+				$response = file_get_contents('https://dev.api.mailcampaigns.nl/api/v1.1/rest',null,stream_context_create(array(
 					'http' => array(
 						'protocol_version' => 1.1,
 						'method'           => 'POST',
@@ -1435,7 +1448,7 @@ class MailCampaigns_API
 	{
 		try
 		{
-			$response = file_get_contents('https://api.mailcampaigns.nl/api/v1.1/rest',null,stream_context_create(array(
+			$response = file_get_contents('https://dev.api.mailcampaigns.nl/api/v1.1/rest',null,stream_context_create(array(
 				'http' => array(
 					'protocol_version' => 1.1,
 					'method'           => 'POST',
@@ -1461,7 +1474,7 @@ class MailCampaigns_API
 
 		try
 		{
-			$response = file_get_contents('https://api.mailcampaigns.nl/api/v1.1/debug',null,stream_context_create(array(
+			$response = file_get_contents('https://dev.api.mailcampaigns.nl/api/v1.1/debug',null,stream_context_create(array(
 				'http' => array(
 					'protocol_version' => 1.1,
 					'method'           => 'POST',
