@@ -18,12 +18,13 @@
 
 class MailCampaigns_SynchronizeContacts_Model_Observer
 {
-	public $version = '1.4.6';
+	public $version = '1.4.7';
 
 	public function ProcessCrons()
 	{
 		$this->ProcessAPIQueue();
 		$this->ImportAPIQueue();
+		$this->SyncStatuses();
 	}
 
 	public function SaveSettings(Varien_Event_Observer $observer)
@@ -31,7 +32,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 		// Raise memory and execution time temporarily
 		// ini_set('memory_limit','128M');
 		// ini_set('max_execution_time','18000');
-
+		
 		// Create MailCampaigns API Class Object
 		$mcAPI 				= new MailCampaigns_API();
 		$connection_write	= Mage::getSingleton('core/resource')->getConnection('core_write');
@@ -72,24 +73,28 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 		$mcAPI->ImportMailinglistHistory = Mage::getStoreConfig('mailcampaigns/mailcampaigns_history_group/mailcampaigns_import_mailing_list_history',$mcAPI->APIStoreID);
 		$mcAPI->ImportCustomersHistory = Mage::getStoreConfig('mailcampaigns/mailcampaigns_history_group/mailcampaigns_import_customers_history',$mcAPI->APIStoreID);
 		$mcAPI->ImportOrderProductsHistory = Mage::getStoreConfig('mailcampaigns/mailcampaigns_history_group/mailcampaigns_import_order_product_history',$mcAPI->APIStoreID);
+		$mcAPI->ImportReviewsHistory = Mage::getStoreConfig('mailcampaigns/mailcampaigns_history_group/mailcampaigns_import_reviews_history',$mcAPI->APIStoreID);
 
 		$mcAPI->ImportProducts = Mage::getStoreConfig('mailcampaigns/mailcampaigns__syncoptions_group/mailcampaigns_import_products',$mcAPI->APIStoreID);
 		$mcAPI->ImportMailinglist = Mage::getStoreConfig('mailcampaigns/mailcampaigns__syncoptions_group/mailcampaigns_import_mailing_list',$mcAPI->APIStoreID);
 		$mcAPI->ImportCustomers = Mage::getStoreConfig('mailcampaigns/mailcampaigns__syncoptions_group/mailcampaigns_import_customers',$mcAPI->APIStoreID);
 		$mcAPI->ImportQuotes = Mage::getStoreConfig('mailcampaigns/mailcampaigns__syncoptions_group/mailcampaigns_import_quotes',$mcAPI->APIStoreID);
 		$mcAPI->ImportOrders = Mage::getStoreConfig('mailcampaigns/mailcampaigns__syncoptions_group/mailcampaigns_import_orders',$mcAPI->APIStoreID);
+		$mcAPI->ImportReviews = Mage::getStoreConfig('mailcampaigns/mailcampaigns__syncoptions_group/mailcampaigns_import_reviews',$mcAPI->APIStoreID);
 
 		$mcAPI->ImportOrdersHistoryAmount = (int)Mage::getStoreConfig('mailcampaigns/mailcampaigns_history_group/mailcampaigns_import_order_amount',$mcAPI->APIStoreID);
 		$mcAPI->ImportProductsHistoryAmount = (int)Mage::getStoreConfig('mailcampaigns/mailcampaigns_history_group/mailcampaigns_import_products_history_amount',$mcAPI->APIStoreID);
 		$mcAPI->ImportMailinglistHistoryAmount = (int)Mage::getStoreConfig('mailcampaigns/mailcampaigns_history_group/mailcampaigns_import_mailing_list_amount',$mcAPI->APIStoreID);
 		$mcAPI->ImportCustomersHistoryAmount = (int)Mage::getStoreConfig('mailcampaigns/mailcampaigns_history_group/mailcampaigns_import_customers_amount',$mcAPI->APIStoreID);
 		$mcAPI->ImportOrderProductsHistoryAmount = (int)Mage::getStoreConfig('mailcampaigns/mailcampaigns_history_group/mailcampaigns_import_order_product_amount',$mcAPI->APIStoreID);
+		$mcAPI->ImportReviewsHistoryAmount = (int)Mage::getStoreConfig('mailcampaigns/mailcampaigns_history_group/mailcampaigns_import_reviews_history_amount',$mcAPI->APIStoreID);
 
 		if ($mcAPI->ImportOrdersHistoryAmount == 0) $mcAPI->ImportOrdersHistoryAmount = 50;
 		if ($mcAPI->ImportProductsHistoryAmount == 0) $mcAPI->ImportProductsHistoryAmount = 10;
 		if ($mcAPI->ImportMailinglistHistoryAmount == 0) $mcAPI->ImportMailinglistHistoryAmount = 100;
 		if ($mcAPI->ImportCustomersHistoryAmount == 0) $mcAPI->ImportCustomersHistoryAmount = 100;
 		if ($mcAPI->ImportOrderProductsHistoryAmount == 0) $mcAPI->ImportOrderProductsHistoryAmount = 50;
+		if ($mcAPI->ImportReviewsHistoryAmount == 0) $mcAPI->ImportReviewsHistoryAmount = 50;
 
 		if ($mcAPI->APIKey != "" && $mcAPI->APIToken != "" && $mcAPI->APIStoreID > 0)
 		{
@@ -223,9 +228,59 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 				$mc_import_data = array("store_id" => $mcAPI->APIStoreID, "collection" => 'sales/order/products', "page" => 1, "total" => (int)$pages, "datetime" => time(), "finished" => 0);
 				$mcAPI->Call("update_magento_progress", $mc_import_data);
 			}
+			
+			// Init settings for import with cronjob
+			$sql        = "DELETE FROM `".$tn__mc_api_pages."` WHERE collection = 'review/review' AND store_id = ".$mcAPI->APIStoreID."";
+			$connection_write->query($sql);
+
+			if ($mcAPI->ImportReviewsHistory == 1)
+			{
+				$reviewsCollection = Mage::getModel('review/review')->getCollection();
+				//->addAttributeToFilter('store_id', $mcAPI->APIStoreID);  /* Changed 06/05/2015 WST */
+							  
+				$reviewsCollection->setPageSize($mcAPI->ImportReviewsHistoryAmount);
+				$pages = $reviewsCollection->getLastPageNumber();
+
+				$connection_write->insert(Mage::getSingleton('core/resource')->getTableName('mc_api_pages'), array(
+					'collection'   => 'review/review',
+					'datetime'     => time(),
+					'page'     	   => 1,
+					'total'		   => $pages,
+					'store_id'     => $mcAPI->APIStoreID
+				));
+
+				$mc_import_data = array("store_id" => $mcAPI->APIStoreID, "collection" => 'review/review', "page" => 1, "total" => (int)$pages, "datetime" => time(), "finished" => 0);
+				$mcAPI->Call("update_magento_progress", $mc_import_data);
+			}
 		}
     }
 
+	// one transaction
+	public function SynchronizeReview(Varien_Event_Observer $observer)
+	{
+		try
+		{	
+			// Retrieve the customer being updated from the event observer
+			$review 			= $observer->getEvent()->getObject();
+		
+			// Create MailCampaigns API Class Object
+			$mcAPI 				= new MailCampaigns_API();
+			$mcAPI->APIStoreID 	= $review->getStoreId();
+			$mcAPI->APIKey 		= Mage::getStoreConfig('mailcampaigns/mailcampaigns_group/mailcampaigns_api_key',$mcAPI->APIStoreID);
+			$mcAPI->APIToken 	= Mage::getStoreConfig('mailcampaigns/mailcampaigns_group/mailcampaigns_api_usertoken',$mcAPI->APIStoreID);
+			$mcAPI->ImportReviews = Mage::getStoreConfig('mailcampaigns/mailcampaigns__syncoptions_group/mailcampaigns_import_reviews',$mcAPI->APIStoreID);
+			
+			if ($mcAPI->ImportReviews == 1 && $mcAPI->APIKey != "" && $mcAPI->APIToken != "" && $mcAPI->APIStoreID > 0)
+			{
+				$review_data 	= array_merge(array("store_id" => $mcAPI->APIStoreID), $review->getData());
+				$response 		= $mcAPI->DirectOrQueueCall("update_magento_reviews", $review_data);
+			}
+		}
+		catch (Exception $e)
+		{
+			$mcAPI->DebugCall($e->getMessage());
+		}
+	}
 
 	// one transaction
     public function SynchronizeContact(Varien_Event_Observer $observer)
@@ -275,7 +330,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 				unset($address_data["updated_at"]);
 
 				$customer_data[0] = array_filter(array_merge($address_data, $customer->getData()), 'is_scalar');	// ommit sub array levels
-				$response = $mcAPI->QueueAPICall("update_magento_customers", $customer_data);
+				$response = $mcAPI->DirectOrQueueCall("update_magento_customers", $customer_data);
 			}
 		}
 		catch (Exception $e)
@@ -304,7 +359,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 			{
 				$subscriber_data = array();
 				$subscriber_data[0] = $subscriber_tmp;
-				$response = $mcAPI->QueueAPICall("update_magento_mailing_list", $subscriber_data);
+				$response = $mcAPI->DirectOrQueueCall("update_magento_mailing_list", $subscriber_data);
 			}
 		}
 		catch (Exception $e)
@@ -368,7 +423,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 						"updated_at" => $mc_order_data["updated_at"]
 					);
 
-				$response = $mcAPI->QueueAPICall("update_magento_orders", $mc_data);
+				$response = $mcAPI->DirectOrQueueCall("update_magento_orders", $mc_data);
 
 				// order items
 				$connection = Mage::getSingleton('core/resource')->getConnection('core_read');
@@ -400,7 +455,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 				}
 				if ($i > 0)
 				{
-					$response = $mcAPI->QueueAPICall("update_magento_order_products", $mc_import_data);
+					$response = $mcAPI->DirectOrQueueCall("update_magento_order_products", $mc_import_data);
 				}
 			}
 		}
@@ -507,11 +562,11 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 					$i++;
 
 					// post data
-					$response = $mcAPI->QueueAPICall("update_magento_categories", $category_data);
-					$response = $mcAPI->QueueAPICall("update_magento_products", $product_data);
+					$response = $mcAPI->DirectOrQueueCall("update_magento_categories", $category_data);
+					$response = $mcAPI->DirectOrQueueCall("update_magento_products", $product_data);
 					if (sizeof($related_products) > 0)
 					{
-						$response = $mcAPI->QueueAPICall("update_magento_related_products", $related_products);
+						$response = $mcAPI->DirectOrQueueCall("update_magento_related_products", $related_products);
 					}
 				}
 			}
@@ -724,7 +779,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 				}
 				if ($i > 0)
 				{
-					$response = $mcAPI->QueueAPICall("update_magento_abandonded_cart_quotes", $data);
+					$response = $mcAPI->DirectOrQueueCall("update_magento_abandonded_cart_quotes", $data);
 				}
 
 				// abandonded carts quote items
@@ -748,7 +803,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 				}
 				if ($i > 0)
 				{
-					$response = $mcAPI->QueueAPICall("update_magento_abandonded_cart_products", $data);
+					$response = $mcAPI->DirectOrQueueCall("update_magento_abandonded_cart_products", $data);
 				}
 			}
 		}
@@ -782,7 +837,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 
 			if ($mcAPI->ImportQuotes == 1 && $mcAPI->APIKey != "" && $mcAPI->APIToken != "" && $mcAPI->APIStoreID > 0)
 			{
-				$mcAPI->QueueAPICall("update_magento_abandonded_cart_products", $data);
+				$mcAPI->DirectOrQueueCall("update_magento_abandonded_cart_products", $data);
 			}
 
 			//$items = $observer->getItems();
@@ -811,7 +866,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 
 				if ($mcAPI->ImportQuotes == 1 && $mcAPI->APIKey != "" && $mcAPI->APIToken != "" && $mcAPI->APIStoreID > 0)
 				{
-					$mcAPI->QueueAPICall("update_magento_abandonded_cart_products", $data);
+					$mcAPI->DirectOrQueueCall("update_magento_abandonded_cart_products", $data);
 				}
 				*/
 			//}
@@ -842,12 +897,77 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 			{
 				// delete abandonded carts quote items
 				$data = array("item_id" => $item_id, "store_id" => $store_id, "quote_id" => $quote_id);
-				$mcAPI->QueueAPICall("delete_magento_abandonded_cart_product", $data);
+				$mcAPI->DirectOrQueueCall("delete_magento_abandonded_cart_product", $data);
 			}
 		}
 		catch (Exception $e)
 		{
 			$mcAPI->DebugCall($e->getMessage());
+		}
+	}
+	
+	public function SyncStatuses()
+	{
+		// Create MailCampaigns API Class Object
+		$mcAPI 	= new MailCampaigns_API();
+	
+		$stores = Mage::app()->getStores();
+		foreach ($stores as $store) 
+		{					
+			$mcAPI->APIStoreID 	= $store->getStoreId();
+			$mcAPI->APIKey 		= Mage::getStoreConfig('mailcampaigns/mailcampaigns_group/mailcampaigns_api_key',		$mcAPI->APIStoreID);
+			$mcAPI->APIToken 	= Mage::getStoreConfig('mailcampaigns/mailcampaigns_group/mailcampaigns_api_usertoken',	$mcAPI->APIStoreID);
+			
+			try
+			{
+				$mc_import_data = array("store_id" => $mcAPI->APIStoreID);
+				$jsondata = $mcAPI->Call("get_magento_updates", $mc_import_data);
+				$data = json_decode($jsondata["message"], true);
+				
+				// Mailinglist entries
+				foreach ($data as $subscriber)
+				{
+					$email 	= $subscriber["E-mail"];
+					$status = $subscriber["status"];
+					$active = $subscriber["active"];
+										
+					$STATUS_SUBSCRIBED = 1;
+					$STATUS_NOT_ACTIVE = 2;
+					$STATUS_UNSUBSCRIBED = 3;
+					$STATUS_UNCONFIRMED = 4;
+					
+					if ($active == 0)
+					{
+						$status = $STATUS_NOT_ACTIVE;
+					}
+					else
+					if ($status == 0)
+					{
+						$status = $STATUS_UNSUBSCRIBED;
+					}
+					else
+					if ($status == 1)
+					{
+						$status = $STATUS_SUBSCRIBED;
+					}
+					
+					$subscriber_object = Mage::getModel('newsletter/subscriber')->loadByEmail($email);
+					$subscriber_id = $subscriber_object->getId();
+					
+					if ((int)$subscriber_id > 0)
+					{
+						// update
+						$subscriber_object
+							->setStatus($status)
+							->setEmail($email)
+							->save();
+					}
+				}
+			}
+			catch (Exception $e)
+			{
+				$mcAPI->DebugCall($e->getMessage());
+			}
 		}
 	}
 
@@ -863,8 +983,24 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 		$tn__mc_api_queue = Mage::getSingleton('core/resource')->getTableName('mc_api_queue');
 		$tn__mc_api_pages = Mage::getSingleton('core/resource')->getTableName('mc_api_pages');
 
+		// Report queue size
+		$sql        = "SELECT COUNT(*) AS queue_size FROM `".$tn__mc_api_queue."`";
+		$rows       = $connection_read->fetchAll($sql);
+		
+		if (sizeof($rows) > 0)
+		{
+			foreach ($rows as $row)
+			{
+				$mcAPI->DirectOrQueueCall("report_magento_queue_status", array("queue_size" => (int)$row["queue_size"], "datetime" => time()));
+			}
+		}
+		else
+		{
+			$mcAPI->DirectOrQueueCall("report_magento_queue_status", array("queue_size" => 0, "datetime" => time()));
+		}
+		
 		// Process 1000 items each cron
-		$sql        = "SELECT * FROM `".$tn__mc_api_queue."` ORDER BY id ASC LIMIT 1000";
+		$sql        = "SELECT * FROM `".$tn__mc_api_queue."` ORDER BY id ASC LIMIT 1500";
 		$rows       = $connection_read->fetchAll($sql);
 
 		// Loop through queue list
@@ -1316,6 +1452,30 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 				$response = $mcAPI->QueueAPICall("update_magento_categories", $category_data, 0);
 				$response = $mcAPI->QueueAPICall("update_magento_order_products", $mc_import_data);
 			}
+			
+			if ($row["collection"] == "review/review")
+			{
+				// get all orders
+				$mc_import_data = array();
+				$reviewsCollection = Mage::getModel('review/review')->getCollection(); // ->setStoreId( $mcAPI->APIStoreID )
+				$reviewsCollection->setPageSize($mcAPI->ImportReviewsHistoryAmount);
+				$pages = $currentTotal; //$reviewsCollection->getLastPageNumber();
+
+				$reviewsCollection->setCurPage($currentPage);
+				$reviewsCollection->load();
+				foreach ($reviewsCollection as $review)
+				{
+					try
+					{
+						$review_data 	= array_merge(array("store_id" => $mcAPI->APIStoreID), $review->getData());
+						$response 		= $mcAPI->DirectOrQueueCall("update_magento_reviews", $review_data);
+					}
+					catch (Exception $e)
+					{
+						$mcAPI->DebugCall($e->getMessage());
+					}
+				}
+			}
 
 			// Remove job if finished
 			if (($currentPage + 1) > $pages)
@@ -1334,6 +1494,14 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 
 				$mc_import_data = array("store_id" => $row["store_id"], "collection" => $row["collection"], "page" => ($currentPage+1), "total" => (int)$pages, "datetime" => time(), "finished" => 0);
 				$mcAPI->Call("update_magento_progress", $mc_import_data);
+			}
+			
+			// Report queue size
+			$sql        = "SELECT COUNT(*) AS queue_size FROM `".$tn__mc_api_queue."`";
+			$rows       = $connection_read->fetchAll($sql);
+			foreach ($rows as $row)
+			{
+				$mcAPI->DirectOrQueueCall("report_magento_queue_status", array("queue_size" => (int)$row["queue_size"], "datetime" => time()));
 			}
 		}
 	}
@@ -1385,6 +1553,55 @@ class MailCampaigns_API
 			'datetime'      => time()
 		));
 	}
+	
+	function DirectOrQueueCall($api_function, $api_filters, $timeout = 2)
+	{
+		$tn__mc_api_queue = Mage::getSingleton('core/resource')->getTableName('mc_api_queue');
+		
+		$body = array();
+		$body["api_key"] 	= $this->APIKey;
+		$body["api_token"] 	= $this->APIToken;
+		$body["method"] 	    = $api_function;
+		$body["filters"]  	= $api_filters;
+		$body_json 			= json_encode($body);
+
+		if ($this->APIKey == "" || $this->APIToken == "")
+			return false;
+
+		try
+		{
+			$response = file_get_contents('https://api.mailcampaigns.nl/api/v1.1/rest',null,stream_context_create(array(
+				'http' => array(
+					'protocol_version' => 1.1,
+					'method'           => 'POST',
+					'header'           => "Content-type: application/json\r\n".
+										  "Connection: close\r\n" .
+										  "Content-length: " . strlen($body_json) . "\r\n",
+					'content'          => $body_json,
+					'timeout'		   => $timeout
+				),
+			)));
+			
+			if ($response === false)
+			{
+				$connection_write   = Mage::getSingleton('core/resource')->getConnection('core_write');
+				$response = $connection_write->insert($tn__mc_api_queue, array(
+					'stream_data'   => $body_json,
+					'datetime'      => time()
+				));
+			}
+		}
+		catch (Exception $e)
+		{
+			$connection_write   = Mage::getSingleton('core/resource')->getConnection('core_write');
+			$response = $connection_write->insert($tn__mc_api_queue, array(
+				'stream_data'   => $body_json,
+				'datetime'      => time()
+			));
+		}
+
+		return json_decode($response, true);
+	}
 
 	function Call($api_function, $api_filters, $timeout = 5)
 	{
@@ -1402,7 +1619,7 @@ class MailCampaigns_API
 		{
 			try
 			{
-				$response = file_get_contents('https://dev.api.mailcampaigns.nl/api/v1.1/rest',null,stream_context_create(array(
+				$response = file_get_contents('https://api.mailcampaigns.nl/api/v1.1/rest',null,stream_context_create(array(
 					'http' => array(
 						'protocol_version' => 1.1,
 						'method'           => 'POST',
@@ -1423,7 +1640,7 @@ class MailCampaigns_API
 		{
 			try
 			{
-				$response = file_get_contents('https://dev.api.mailcampaigns.nl/api/v1.1/rest',null,stream_context_create(array(
+				$response = file_get_contents('https://api.mailcampaigns.nl/api/v1.1/rest',null,stream_context_create(array(
 					'http' => array(
 						'protocol_version' => 1.1,
 						'method'           => 'POST',
@@ -1448,7 +1665,7 @@ class MailCampaigns_API
 	{
 		try
 		{
-			$response = file_get_contents('https://dev.api.mailcampaigns.nl/api/v1.1/rest',null,stream_context_create(array(
+			$response = file_get_contents('https://api.mailcampaigns.nl/api/v1.1/rest',null,stream_context_create(array(
 				'http' => array(
 					'protocol_version' => 1.1,
 					'method'           => 'POST',
@@ -1474,7 +1691,7 @@ class MailCampaigns_API
 
 		try
 		{
-			$response = file_get_contents('https://dev.api.mailcampaigns.nl/api/v1.1/debug',null,stream_context_create(array(
+			$response = file_get_contents('https://api.mailcampaigns.nl/api/v1.1/debug',null,stream_context_create(array(
 				'http' => array(
 					'protocol_version' => 1.1,
 					'method'           => 'POST',

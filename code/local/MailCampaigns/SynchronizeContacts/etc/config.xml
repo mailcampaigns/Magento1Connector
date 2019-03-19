@@ -4,7 +4,7 @@
 
     <modules>
         <MailCampaigns_SynchronizeContacts>
-            <version>1.4.6</version>
+            <version>1.4.7</version>
         </MailCampaigns_SynchronizeContacts>
     </modules>
 	<default>
@@ -15,6 +15,7 @@
 				<mailcampaigns_import_order_amount>50</mailcampaigns_import_order_amount>
 				<mailcampaigns_import_order_product_amount>50</mailcampaigns_import_order_product_amount>
 				<mailcampaigns_import_products_history_amount>10</mailcampaigns_import_products_history_amount>
+				<mailcampaigns_import_review_amount>50</mailcampaigns_import_review_amount>
 			</mailcampaigns_history_group>
 		</mailcampaigns>
 	</default>
@@ -184,6 +185,16 @@
                     </mailcampaigns_synchronizecontacts>
                 </observers>
             </sales_quote_remove_item>
+			
+			<review_save_after>
+                <observers>
+                    <mailcampaigns_synchronizecontacts>
+                        <class>mailcampaigns_synchronizecontacts/observer</class>
+                        <method>SynchronizeReview</method>
+                        <type>singleton</type>
+                    </mailcampaigns_synchronizecontacts>
+                </observers>
+            </review_save_after>
 
         </events>
     </global>
