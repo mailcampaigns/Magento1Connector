@@ -18,7 +18,7 @@
 
 class MailCampaigns_SynchronizeContacts_Model_Observer
 {
-	public $version = '1.4.7';
+	public $version = '1.4.8';
 
 	public function ProcessCrons()
 	{
@@ -397,6 +397,9 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 				$tn__catalog_category_entity_varchar 	= Mage::getSingleton('core/resource')->getTableName('catalog_category_entity_varchar');
 				$tn__eav_entity_type 					= Mage::getSingleton('core/resource')->getTableName('eav_entity_type');
 				$tn__catalog_category_entity 			= Mage::getSingleton('core/resource')->getTableName('catalog_category_entity');
+				
+				// get price including VAT
+				$mc_order_data["grand_total"] = Mage::helper('tax')->getPrice($product, $mc_order_data["grand_total"], true, NULL, NULL, NULL, $mcAPI->APIStoreID, NULL, true);
 
 				$mc_data = array(
 						"store_id" => $mc_order_data["store_id"],
@@ -445,6 +448,10 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 					// get category names
 					$categories = array();
 					$product = Mage::getModel('catalog/product')->load($row["product_id"]);
+					
+					// get price including VAT
+					$mc_import_data[$i]["price"] = Mage::helper('tax')->getPrice($product, $mc_import_data[$i]["price"], true, NULL, NULL, NULL, $mcAPI->APIStoreID, NULL, true);
+					
 					foreach ($product->getCategoryIds() as $category_id)
 					{
 						$categories[] = Mage::getModel('catalog/category')->load($category_id)->getName();
@@ -502,6 +509,9 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 							$product_data[$i][$attribute->getAttributeCode()] = $data;
 						}
 					}
+					
+					// get price including VAT
+					$product_data[$i]["price"] = Mage::helper('tax')->getPrice($product, $product_data[$i]["price"], true, NULL, NULL, NULL, $mcAPI->APIStoreID, NULL, true);
 
 					// get lowest tier price / staffel
 					$lowestTierPrice = $product->getResource()->getAttribute('tier_price')->getFrontend()->getValue($product);
@@ -613,6 +623,9 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 							$data = $attribute->getFrontend()->getValue($product);
 							if (!is_array($data)) $product_data[$i][$attribute->getAttributeCode()] = $data;
 						}
+						
+						// get price including VAT
+						$product_data[$i]["price"] = Mage::helper('tax')->getPrice($product, $product_data[$i]["price"], true, NULL, NULL, NULL, $mcAPI->APIStoreID, NULL, true);
 
 						// get lowest tier price / staffel
 						$lowestTierPrice = $product->getResource()->getAttribute('tier_price')->getFrontend()->getValue($product);
@@ -761,6 +774,14 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 					{
 						if (!is_numeric($key)) $data[$i][$key] = $value;
 					}
+					
+					// get price including VAT
+					$data[$i]["grand_total"] = Mage::helper('tax')->getPrice($product, $data[$i]["grand_total"], true, NULL, NULL, NULL, $mcAPI->APIStoreID, NULL, true);
+					$data[$i]["base_grand_total"] = Mage::helper('tax')->getPrice($product, $data[$i]["base_grand_total"], true, NULL, NULL, NULL, $mcAPI->APIStoreID, NULL, true);
+					$data[$i]["subtotal"] = Mage::helper('tax')->getPrice($product, $data[$i]["subtotal"], true, NULL, NULL, NULL, $mcAPI->APIStoreID, NULL, true);
+					$data[$i]["base_subtotal"] = Mage::helper('tax')->getPrice($product, $data[$i]["base_subtotal"], true, NULL, NULL, NULL, $mcAPI->APIStoreID, NULL, true);
+					$data[$i]["subtotal_with_discount"] = Mage::helper('tax')->getPrice($product, $data[$i]["subtotal_with_discount"], true, NULL, NULL, NULL, $mcAPI->APIStoreID, NULL, true);
+					$data[$i]["base_subtotal_with_discount"] = Mage::helper('tax')->getPrice($product, $data[$i]["base_subtotal_with_discount"], true, NULL, NULL, NULL, $mcAPI->APIStoreID, NULL, true);
 
 					// retrieve session_id from mailcampaigns interface server
 					/*
@@ -799,6 +820,10 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 					{
 						if (!is_numeric($key)) $data[$i][$key] = $value;
 					}
+					
+					// get price including VAT
+					$data[$i]["price"] = Mage::helper('tax')->getPrice($product, $data[$i]["price"], true, NULL, NULL, NULL, $mcAPI->APIStoreID, NULL, true);
+										
 					$i++;
 				}
 				if ($i > 0)
@@ -854,6 +879,9 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 
 				$product = Mage::getModel('catalog/product')->setStoreId( $store_id )->load($product_id);
 				$price = $product->getFinalPrice();
+				
+				// get price including VAT
+				$price = Mage::helper('tax')->getPrice($product, $price, true, NULL, NULL, NULL, $mcAPI->APIStoreID, NULL, true);
 
 				$data = array();
 				$data[0] = array("product_id" => $product_id, "quote_id" => $quote_id, "store_id" => $store_id, "qty" => $qty, "price" => $price, "item_id" => $item_id);
@@ -1233,6 +1261,9 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 								if (!is_array($data)) $product_data[$i][$attribute->getAttributeCode()] = $data;
 								unset($data);
 							}
+							
+							// get price including VAT
+							$product_data[$i]["price"] = Mage::helper('tax')->getPrice($product, $product_data[$i]["price"], true, NULL, NULL, NULL, $mcAPI->APIStoreID, NULL, true);
 
 							// get lowest tier price / staffel
 							$lowestTierPrice = $product->getResource()->getAttribute('tier_price')->getFrontend()->getValue($product);
@@ -1332,6 +1363,9 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 						$mc_order_data = (array)$order->getData();
 						$shipping = (array)$order->getShippingAddress()->getData();
         				// $billing = (array)$order->getBillingAddress()->getData();
+						
+						// get price including VAT
+						$mc_order_data["grand_total"] = Mage::helper('tax')->getPrice($product, $mc_order_data["grand_total"], true, NULL, NULL, NULL, $mcAPI->APIStoreID, NULL, true);
 
 						if ($mc_order_data["store_id"] == $mcAPI->APIStoreID || $mc_order_data["store_id"] == 0) /* Added 06/05/2015 WST */
 						{
@@ -1417,6 +1451,9 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 						{
 							if (!is_numeric($key)) $mc_import_data[$i][$key] = $value;
 						}
+						
+						// get price including VAT
+						$mc_import_data[$i]["price"] = Mage::helper('tax')->getPrice($product, $mc_import_data[$i]["price"], true, NULL, NULL, NULL, $mcAPI->APIStoreID, NULL, true);
 
 						// get categories
 						$categories = array();
