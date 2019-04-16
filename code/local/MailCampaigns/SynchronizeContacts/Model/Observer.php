@@ -18,7 +18,7 @@
 
 class MailCampaigns_SynchronizeContacts_Model_Observer
 {
-	public $version = '1.4.9';
+	public $version = '1.4.10';
 
 	public function ProcessCrons()
 	{
@@ -98,6 +98,14 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 
 		if ($mcAPI->APIKey != "" && $mcAPI->APIToken != "" && $mcAPI->APIStoreID > 0)
 		{
+			// Report queue size
+			$sql        = "SELECT COUNT(*) AS queue_size FROM `".$tn__mc_api_queue."`";
+			$rows       = $connection_read->fetchAll($sql);
+			foreach ($rows as $row)
+			{
+				$mcAPI->Call("report_magento_queue_status", array("queue_size" => (int)$row["queue_size"], "datetime" => time()));
+			}
+			
 			// save multistore settings
 			$config_data 				= array();
 			$config_data 				= Mage::app()->getStore(Mage::app()->getRequest()->getParam('store'))->getData();
@@ -375,8 +383,17 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 			// Retrieve the order being updated from the event observer
 			$order = $observer->getEvent()->getOrder();
 
-			$shipping = $order->getShippingAddress()->getData();
-        	// $billing = $order->getBillingAddress()->getData();
+			$address = array();			
+			if(is_object($order->getShippingAddress()))
+            {    
+                $address = (array)$order->getShippingAddress()->getData();
+            }    
+           	else
+            if(is_object($order->getBillingAddress()))
+            {
+                $address = (array)$order->getBillingAddress()->getData();
+            }
+			
 			$mc_order_data = $order->getData();
 
 			// Create MailCampaigns API Class Object
@@ -412,13 +429,13 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 						"lastname" => $mc_order_data["customer_lastname"],
 						"middlename" => $mc_order_data["customer_middlename"],
 						"dob" => $mc_order_data["customer_dob"],
-						"telephone" => $shipping["telephone"],
-						"street" => $shipping["street"],
-						"postcode" => $shipping["postcode"],
-						"city" => $shipping["city"],
-						"region" => $shipping["region"],
-						"country_id" => $shipping["country_id"],
-						"company" => $shipping["company"],
+						"telephone" => $address["telephone"],
+						"street" => $address["street"],
+						"postcode" => $address["postcode"],
+						"city" => $address["city"],
+						"region" => $address["region"],
+						"country_id" => $address["country_id"],
+						"company" => $address["company"],
 						"created_at" => $mc_order_data["created_at"],
 						"updated_at" => $mc_order_data["updated_at"]
 					);
@@ -929,6 +946,9 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 	{
 		// Create MailCampaigns API Class Object
 		$mcAPI 	= new MailCampaigns_API();
+		
+		$tn__mc_api_queue = Mage::getSingleton('core/resource')->getTableName('mc_api_queue');
+		$tn__mc_api_pages = Mage::getSingleton('core/resource')->getTableName('mc_api_pages');
 	
 		$stores = Mage::app()->getStores();
 		foreach ($stores as $store) 
@@ -939,47 +959,58 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 			
 			try
 			{
-				$mc_import_data = array("store_id" => $mcAPI->APIStoreID);
-				$jsondata = $mcAPI->Call("get_magento_updates", $mc_import_data);
-				$data = json_decode($jsondata["message"], true);
-				
-				// Mailinglist entries
-				foreach ($data as $subscriber)
+				if (isset($mcAPI->APIKey) && isset($mcAPI->APIToken))
 				{
-					$email 	= $subscriber["E-mail"];
-					$status = $subscriber["status"];
-					$active = $subscriber["active"];
-										
-					$STATUS_SUBSCRIBED = 1;
-					$STATUS_NOT_ACTIVE = 2;
-					$STATUS_UNSUBSCRIBED = 3;
-					$STATUS_UNCONFIRMED = 4;
+					$mc_import_data = array("store_id" => $mcAPI->APIStoreID);
+					$jsondata = $mcAPI->Call("get_magento_updates", $mc_import_data);
+					$data = json_decode($jsondata["message"], true);
 					
-					if ($active == 0)
+					// Mailinglist entries
+					foreach ($data as $subscriber)
 					{
-						$status = $STATUS_NOT_ACTIVE;
-					}
-					else
-					if ($status == 0)
-					{
-						$status = $STATUS_UNSUBSCRIBED;
-					}
-					else
-					if ($status == 1)
-					{
-						$status = $STATUS_SUBSCRIBED;
+						$email 	= $subscriber["E-mail"];
+						$status = $subscriber["status"];
+						$active = $subscriber["active"];
+											
+						$STATUS_SUBSCRIBED = 1;
+						$STATUS_NOT_ACTIVE = 2;
+						$STATUS_UNSUBSCRIBED = 3;
+						$STATUS_UNCONFIRMED = 4;
+						
+						if ($active == 0)
+						{
+							$status = $STATUS_NOT_ACTIVE;
+						}
+						else
+						if ($status == 0)
+						{
+							$status = $STATUS_UNSUBSCRIBED;
+						}
+						else
+						if ($status == 1)
+						{
+							$status = $STATUS_SUBSCRIBED;
+						}
+						
+						$subscriber_object = Mage::getModel('newsletter/subscriber')->loadByEmail($email);
+						$subscriber_id = $subscriber_object->getId();
+						
+						if ((int)$subscriber_id > 0)
+						{
+							// update
+							$subscriber_object
+								->setStatus($status)
+								->setEmail($email)
+								->save();
+						}
 					}
 					
-					$subscriber_object = Mage::getModel('newsletter/subscriber')->loadByEmail($email);
-					$subscriber_id = $subscriber_object->getId();
-					
-					if ((int)$subscriber_id > 0)
+					// Report queue size
+					$sql        = "SELECT COUNT(*) AS queue_size FROM `".$tn__mc_api_queue."`";
+					$rows       = $connection_read->fetchAll($sql);
+					foreach ($rows as $row)
 					{
-						// update
-						$subscriber_object
-							->setStatus($status)
-							->setEmail($email)
-							->save();
+						$mcAPI->Call("report_magento_queue_status", array("queue_size" => (int)$row["queue_size"], "datetime" => time()));
 					}
 				}
 			}
@@ -1002,22 +1033,6 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 		$tn__mc_api_queue = Mage::getSingleton('core/resource')->getTableName('mc_api_queue');
 		$tn__mc_api_pages = Mage::getSingleton('core/resource')->getTableName('mc_api_pages');
 
-		// Report queue size
-		$sql        = "SELECT COUNT(*) AS queue_size FROM `".$tn__mc_api_queue."`";
-		$rows       = $connection_read->fetchAll($sql);
-		
-		if (sizeof($rows) > 0)
-		{
-			foreach ($rows as $row)
-			{
-				$mcAPI->DirectOrQueueCall("report_magento_queue_status", array("queue_size" => (int)$row["queue_size"], "datetime" => time()));
-			}
-		}
-		else
-		{
-			$mcAPI->DirectOrQueueCall("report_magento_queue_status", array("queue_size" => 0, "datetime" => time()));
-		}
-		
 		// Process 1000 items each cron
 		$sql        = "SELECT * FROM `".$tn__mc_api_queue."` ORDER BY id ASC LIMIT 1500";
 		$rows       = $connection_read->fetchAll($sql);
@@ -1352,8 +1367,17 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 					try
 					{
 						$mc_order_data = (array)$order->getData();
-						$shipping = (array)$order->getShippingAddress()->getData();
-        				// $billing = (array)$order->getBillingAddress()->getData();
+												
+						$address = array();			
+						if(is_object($order->getShippingAddress()))
+						{    
+							$address = (array)$order->getShippingAddress()->getData();
+						}    
+						else
+						if(is_object($order->getBillingAddress()))
+						{
+							$address = (array)$order->getBillingAddress()->getData();
+						}
 						
 						// get price including VAT
 						$mc_order_data["grand_total"] = Mage::helper('tax')->getPrice($product, $mc_order_data["grand_total"], true, NULL, NULL, NULL, $mcAPI->APIStoreID, NULL, true);
@@ -1374,13 +1398,13 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 								"lastname" => $mc_order_data["customer_lastname"],
 								"middlename" => $mc_order_data["customer_middlename"],
 								"dob" => $mc_order_data["customer_dob"],
-								"telephone" => $shipping["telephone"],
-								"street" => $shipping["street"],
-								"postcode" => $shipping["postcode"],
-								"city" => $shipping["city"],
-								"region" => $shipping["region"],
-								"country_id" => $shipping["country_id"],
-								"company" => $shipping["company"],
+								"telephone" => $address["telephone"],
+								"street" => $address["street"],
+								"postcode" => $address["postcode"],
+								"city" => $address["city"],
+								"region" => $address["region"],
+								"country_id" => $address["country_id"],
+								"company" => $address["company"],
 								"created_at" => $mc_order_data["created_at"],
 								"updated_at" => $mc_order_data["updated_at"]
 								);
@@ -1522,14 +1546,6 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 
 				$mc_import_data = array("store_id" => $row["store_id"], "collection" => $row["collection"], "page" => ($currentPage+1), "total" => (int)$pages, "datetime" => time(), "finished" => 0);
 				$mcAPI->Call("update_magento_progress", $mc_import_data);
-			}
-			
-			// Report queue size
-			$sql        = "SELECT COUNT(*) AS queue_size FROM `".$tn__mc_api_queue."`";
-			$rows       = $connection_read->fetchAll($sql);
-			foreach ($rows as $row)
-			{
-				$mcAPI->DirectOrQueueCall("report_magento_queue_status", array("queue_size" => (int)$row["queue_size"], "datetime" => time()));
 			}
 		}
 	}
