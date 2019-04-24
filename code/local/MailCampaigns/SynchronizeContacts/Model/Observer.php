@@ -947,6 +947,8 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 		// Create MailCampaigns API Class Object
 		$mcAPI 	= new MailCampaigns_API();
 		
+		$connection_read  = Mage::getSingleton('core/resource')->getConnection('core_read');
+		
 		$tn__mc_api_queue = Mage::getSingleton('core/resource')->getTableName('mc_api_queue');
 		$tn__mc_api_pages = Mage::getSingleton('core/resource')->getTableName('mc_api_pages');
 	
