@@ -18,7 +18,7 @@
 
 class MailCampaigns_SynchronizeContacts_Model_Observer
 {
-	public $version = '1.4.10';
+	public $version = '1.4.11';
 
 	public function ProcessCrons()
 	{
@@ -32,7 +32,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 		// Raise memory and execution time temporarily
 		// ini_set('memory_limit','128M');
 		// ini_set('max_execution_time','18000');
-		
+
 		// Create MailCampaigns API Class Object
 		$mcAPI 				= new MailCampaigns_API();
 		$connection_write	= Mage::getSingleton('core/resource')->getConnection('core_write');
@@ -105,7 +105,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 			{
 				$mcAPI->Call("report_magento_queue_status", array("queue_size" => (int)$row["queue_size"], "datetime" => time()));
 			}
-			
+
 			// save multistore settings
 			$config_data 				= array();
 			$config_data 				= Mage::app()->getStore(Mage::app()->getRequest()->getParam('store'))->getData();
@@ -123,8 +123,9 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 			{
 				$customersCollection = Mage::getModel('customer/customer')
 							  ->getCollection()
-							  ->addAttributeToSelect('*');
-							  //->addAttributeToFilter('store_id', $mcAPI->APIStoreID);  /* Changed 06/05/2015 WST */
+							  ->addAttributeToSelect('*')
+							  ->addAttributeToFilter('store_id', $mcAPI->APIStoreID);
+
 				$customersCollection->setPageSize($mcAPI->ImportCustomersHistoryAmount);
 				$pages = $customersCollection->getLastPageNumber();
 
@@ -147,6 +148,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 			if ($mcAPI->ImportMailinglistHistory == 1)
 			{
 				$mailinglistCollection = Mage::getResourceModel('newsletter/subscriber_collection')->load();
+
 				$mailinglistCollection->setPageSize($mcAPI->ImportMailinglistHistoryAmount);
 				$pages = $mailinglistCollection->getLastPageNumber();
 
@@ -168,7 +170,8 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 
 			if ($mcAPI->ImportProductsHistory == 1)
 			{
-				$productsCollection = Mage::getModel('catalog/product')->setStoreId( $mcAPI->APIStoreID )->setOrder('entity_id', 'ASC')->getCollection();//->addStoreFilter($mcAPI->APIStoreID);
+				$productsCollection = Mage::getModel('catalog/product')->setStoreId( $mcAPI->APIStoreID )->setOrder('entity_id', 'ASC')->getCollection()->addStoreFilter($mcAPI->APIStoreID);
+
 				$productsCollection->setPageSize($mcAPI->ImportProductsHistoryAmount);
 				$pages = $productsCollection->getLastPageNumber();
 
@@ -190,7 +193,8 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 
 			if ($mcAPI->ImportOrdersHistory == 1)
 			{
-				$ordersCollection = Mage::getModel('sales/order')->getCollection(); // ->setStoreId( $mcAPI->APIStoreID )
+				$ordersCollection = Mage::getModel('sales/order')->getCollection()->addFieldToFilter('store_id', $mcAPI->APIStoreID);
+
 				$ordersCollection->setPageSize($mcAPI->ImportOrdersHistoryAmount);
 				$pages = $ordersCollection->getLastPageNumber();
 
@@ -236,16 +240,15 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 				$mc_import_data = array("store_id" => $mcAPI->APIStoreID, "collection" => 'sales/order/products', "page" => 1, "total" => (int)$pages, "datetime" => time(), "finished" => 0);
 				$mcAPI->Call("update_magento_progress", $mc_import_data);
 			}
-			
+
 			// Init settings for import with cronjob
 			$sql        = "DELETE FROM `".$tn__mc_api_pages."` WHERE collection = 'review/review' AND store_id = ".$mcAPI->APIStoreID."";
 			$connection_write->query($sql);
 
 			if ($mcAPI->ImportReviewsHistory == 1)
 			{
-				$reviewsCollection = Mage::getModel('review/review')->getCollection();
-				//->addAttributeToFilter('store_id', $mcAPI->APIStoreID);  /* Changed 06/05/2015 WST */
-							  
+				$reviewsCollection = Mage::getModel('review/review')->getCollection()->addStoreFilter($mcAPI->APIStoreID);
+
 				$reviewsCollection->setPageSize($mcAPI->ImportReviewsHistoryAmount);
 				$pages = $reviewsCollection->getLastPageNumber();
 
@@ -267,17 +270,17 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 	public function SynchronizeReview(Varien_Event_Observer $observer)
 	{
 		try
-		{	
+		{
 			// Retrieve the customer being updated from the event observer
 			$review 			= $observer->getEvent()->getObject();
-		
+
 			// Create MailCampaigns API Class Object
 			$mcAPI 				= new MailCampaigns_API();
 			$mcAPI->APIStoreID 	= $review->getStoreId();
 			$mcAPI->APIKey 		= Mage::getStoreConfig('mailcampaigns/mailcampaigns_group/mailcampaigns_api_key',$mcAPI->APIStoreID);
 			$mcAPI->APIToken 	= Mage::getStoreConfig('mailcampaigns/mailcampaigns_group/mailcampaigns_api_usertoken',$mcAPI->APIStoreID);
 			$mcAPI->ImportReviews = Mage::getStoreConfig('mailcampaigns/mailcampaigns__syncoptions_group/mailcampaigns_import_reviews',$mcAPI->APIStoreID);
-			
+
 			if ($mcAPI->ImportReviews == 1 && $mcAPI->APIKey != "" && $mcAPI->APIToken != "" && $mcAPI->APIStoreID > 0)
 			{
 				$review_data 	= array_merge(array("store_id" => $mcAPI->APIStoreID), $review->getData());
@@ -383,17 +386,17 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 			// Retrieve the order being updated from the event observer
 			$order = $observer->getEvent()->getOrder();
 
-			$address = array();			
+			$address = array();
 			if(is_object($order->getShippingAddress()))
-            {    
+            {
                 $address = (array)$order->getShippingAddress()->getData();
-            }    
+            }
            	else
             if(is_object($order->getBillingAddress()))
             {
                 $address = (array)$order->getBillingAddress()->getData();
             }
-			
+
 			$mc_order_data = $order->getData();
 
 			// Create MailCampaigns API Class Object
@@ -414,7 +417,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 				$tn__catalog_category_entity_varchar 	= Mage::getSingleton('core/resource')->getTableName('catalog_category_entity_varchar');
 				$tn__eav_entity_type 					= Mage::getSingleton('core/resource')->getTableName('eav_entity_type');
 				$tn__catalog_category_entity 			= Mage::getSingleton('core/resource')->getTableName('catalog_category_entity');
-				
+
 				$mc_data = array(
 						"store_id" => $mc_order_data["store_id"],
 						"order_id" => $mc_order_data["entity_id"],
@@ -462,10 +465,13 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 					// get category names
 					$categories = array();
 					$product = Mage::getModel('catalog/product')->load($row["product_id"]);
-					
+
 					// get price including VAT
-					$mc_import_data[$i]["price"] = Mage::helper('tax')->getPrice($product, $mc_import_data[$i]["price"], true, NULL, NULL, NULL, $mcAPI->APIStoreID, NULL, true);
-					
+					if ($product != NULL)
+					{
+						$mc_import_data[$i]["price"] = Mage::helper('tax')->getPrice($product, $mc_import_data[$i]["price"], true, NULL, NULL, NULL, $mcAPI->APIStoreID, NULL, true);
+					}
+
 					foreach ($product->getCategoryIds() as $category_id)
 					{
 						$categories[] = Mage::getModel('catalog/category')->load($category_id)->getName();
@@ -523,24 +529,62 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 							$product_data[$i][$attribute->getAttributeCode()] = $data;
 						}
 					}
-					
+
 					// get price including VAT
-					$product_data[$i]["price"] = Mage::helper('tax')->getPrice($product, $product_data[$i]["price"], true, NULL, NULL, NULL, $mcAPI->APIStoreID, NULL, true);
+					if ($product != NULL)
+					{
+						$product_data[$i]["price"] = Mage::helper('tax')->getPrice($product, $product_data[$i]["price"], true, NULL, NULL, NULL, $mcAPI->APIStoreID, NULL, true);
+					}
 
 					// get lowest tier price / staffel
 					$lowestTierPrice = $product->getResource()->getAttribute('tier_price')->getFrontend()->getValue($product);
 					$product_data[$i]["lowest_tier_price"] = $lowestTierPrice;
 
 					// images
-					$product_data[$i]["mc:image_url_main"] = $product->getMediaConfig()->getMediaUrl($product->getData('image'));
 					$image_id = 1;
-					foreach ($product->getMediaGalleryImages() as $image)
+	        if($product->getData('image') != NULL && $product->getData('image') != "no_selection"){
+	          $product_data[$i]["mc:image_url_main"] = $product->getMediaConfig()->getMediaUrl($product->getData('image'));
+	        }
+	        else{
+	          $product_data[$i]["mc:image_url_main"] = "";
+	        }
+					$product_images = $product->getMediaGalleryImages();
+	        if (!empty($product_images) && sizeof($product_images) > 0 && is_array($product_images))
 					{
-						$product_data[$i]["mc:image_url_".$image_id++.""] = $image->getUrl();
+						foreach ($product_images as $image)
+						{
+							$product_data[$i]["mc:image_url_".$image_id++.""] = $image->getUrl();
+						}
 					}
+	        //get image from parent if empty and not configurable
+	        if($product_data[$i]["mc:image_url_main"] === "" && $product_data[$i]["parent_id"] != "" && $product_data[$i]["type_id"] != "configurable"){
+	          if($the_parent_product->getData('image') != "no_selection" && $the_parent_product->getData('image') != NULL){
+	            $product_data[$i]["mc:image_url_main"] = $the_parent_product->getMediaConfig()->getMediaUrl($the_parent_product->getData('image'));
+	          }
+	          else{
+	            $product_data[$i]["mc:image_url_main"] = "";
+	          }
+	        }
+
+	        //get image from child if empty and configurable, loops through child products until it finds an image
+	        if($product_data[$i]["mc:image_url_main"] == "" && !empty($child_product_ids) && $product_data[$i]["type_id"] == "configurable"){
+	          foreach($child_product_ids[0] as $child_product_id){
+	            $the_child_product = $objectMan->create('Magento\Catalog\Model\Product')->load($child_product_id);
+	            if($the_child_product->getData('image') != NULL && $the_child_product->getData('image') != "no_selection"){
+	              $product_data[$i]["mc:image_url_main"] = $the_child_product->getMediaConfig()->getMediaUrl($the_child_product->getData('image'));
+	              break;
+	            }
+	            else{
+	              $product_data[$i]["mc:image_url_main"] = "";
+	            }
+	          }
+	        }
 
 					// link
 					$product_data[$i]["mc:product_url"] = $product->getProductUrl();
+
+					// Stock quantity
+					$product_data[$i]["quantity"] = (int)Mage::getModel('cataloginventory/stock_item')->loadByProduct($product)->getQty();
 
 					// store id
 					$product_data[$i]["store_id"] = $_storeId; //implode(",",$product->getStoreIds());
@@ -637,24 +681,62 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 							$data = $attribute->getFrontend()->getValue($product);
 							if (!is_array($data)) $product_data[$i][$attribute->getAttributeCode()] = $data;
 						}
-						
+
 						// get price including VAT
-						$product_data[$i]["price"] = Mage::helper('tax')->getPrice($product, $product_data[$i]["price"], true, NULL, NULL, NULL, $mcAPI->APIStoreID, NULL, true);
+						if ($product != NULL)
+						{
+							$product_data[$i]["price"] = Mage::helper('tax')->getPrice($product, $product_data[$i]["price"], true, NULL, NULL, NULL, $mcAPI->APIStoreID, NULL, true);
+						}
 
 						// get lowest tier price / staffel
 						$lowestTierPrice = $product->getResource()->getAttribute('tier_price')->getFrontend()->getValue($product);
 						$product_data[$i]["lowest_tier_price"] = $lowestTierPrice;
 
 						// images
-						$product_data[$i]["mc:image_url_main"] = $product->getMediaConfig()->getMediaUrl($product->getData('image'));
 						$image_id = 1;
-						foreach ($product->getMediaGalleryImages() as $image)
+		        if($product->getData('image') != NULL && $product->getData('image') != "no_selection"){
+		          $product_data[$i]["mc:image_url_main"] = $product->getMediaConfig()->getMediaUrl($product->getData('image'));
+		        }
+		        else{
+		          $product_data[$i]["mc:image_url_main"] = "";
+		        }
+						$product_images = $product->getMediaGalleryImages();
+		        if (!empty($product_images) && sizeof($product_images) > 0 && is_array($product_images))
 						{
-							$product_data[$i]["mc:image_url_".$image_id++.""] = $image->getUrl();
+							foreach ($product_images as $image)
+							{
+								$product_data[$i]["mc:image_url_".$image_id++.""] = $image->getUrl();
+							}
 						}
+		        //get image from parent if empty and not configurable
+		        if($product_data[$i]["mc:image_url_main"] === "" && $product_data[$i]["parent_id"] != "" && $product_data[$i]["type_id"] != "configurable"){
+		          if($the_parent_product->getData('image') != "no_selection" && $the_parent_product->getData('image') != NULL){
+		            $product_data[$i]["mc:image_url_main"] = $the_parent_product->getMediaConfig()->getMediaUrl($the_parent_product->getData('image'));
+		          }
+		          else{
+		            $product_data[$i]["mc:image_url_main"] = "";
+		          }
+		        }
+
+		        //get image from child if empty and configurable, loops through child products until it finds an image
+		        if($product_data[$i]["mc:image_url_main"] == "" && !empty($child_product_ids) && $product_data[$i]["type_id"] == "configurable"){
+		          foreach($child_product_ids[0] as $child_product_id){
+		            $the_child_product = $objectMan->create('Magento\Catalog\Model\Product')->load($child_product_id);
+		            if($the_child_product->getData('image') != NULL && $the_child_product->getData('image') != "no_selection"){
+		              $product_data[$i]["mc:image_url_main"] = $the_child_product->getMediaConfig()->getMediaUrl($the_child_product->getData('image'));
+		              break;
+		            }
+		            else{
+		              $product_data[$i]["mc:image_url_main"] = "";
+		            }
+		          }
+		        }
 
 						// link
 						$product_data[$i]["mc:product_url"] = $product->getProductUrl();
+
+						// Stock quantity
+						$product_data[$i]["quantity"] = (int)Mage::getModel('cataloginventory/stock_item')->loadByProduct($product)->getQty();
 
 						// store id
 						$product_data[$i]["store_id"] = $_storeId; //implode(",",$product->getStoreIds());
@@ -788,7 +870,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 					{
 						if (!is_numeric($key)) $data[$i][$key] = $value;
 					}
-					
+
 					// retrieve session_id from mailcampaigns interface server
 					/*
 					$data[$i]["session_id"] = file_get_contents('https://interface.mailcampaigns.nl/session_id',null,stream_context_create(array(
@@ -826,12 +908,15 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 					{
 						if (!is_numeric($key)) $data[$i][$key] = $value;
 					}
-					
+
 					$product = Mage::getModel('catalog/product')->setStoreId( $row["store_id"] )->load($row["product_id"]);
-					
+
 					// get price including VAT
-					$data[$i]["price"] = Mage::helper('tax')->getPrice($product, $data[$i]["price"], true, NULL, NULL, NULL, $mcAPI->APIStoreID, NULL, true);
-										
+					if ($product != NULL)
+					{
+						$data[$i]["price"] = Mage::helper('tax')->getPrice($product, $data[$i]["price"], true, NULL, NULL, NULL, $mcAPI->APIStoreID, NULL, true);
+					}
+
 					$i++;
 				}
 				if ($i > 0)
@@ -887,7 +972,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 
 				$product = Mage::getModel('catalog/product')->setStoreId( $store_id )->load($product_id);
 				$price = $product->getFinalPrice();
-				
+
 				// get price including VAT
 				$price = Mage::helper('tax')->getPrice($product, $price, true, NULL, NULL, NULL, $mcAPI->APIStoreID, NULL, true);
 
@@ -941,24 +1026,24 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 			$mcAPI->DebugCall($e->getMessage());
 		}
 	}
-	
+
 	public function SyncStatuses()
 	{
 		// Create MailCampaigns API Class Object
 		$mcAPI 	= new MailCampaigns_API();
-		
+
 		$connection_read  = Mage::getSingleton('core/resource')->getConnection('core_read');
-		
+
 		$tn__mc_api_queue = Mage::getSingleton('core/resource')->getTableName('mc_api_queue');
 		$tn__mc_api_pages = Mage::getSingleton('core/resource')->getTableName('mc_api_pages');
-	
+
 		$stores = Mage::app()->getStores();
-		foreach ($stores as $store) 
-		{					
+		foreach ($stores as $store)
+		{
 			$mcAPI->APIStoreID 	= $store->getStoreId();
 			$mcAPI->APIKey 		= Mage::getStoreConfig('mailcampaigns/mailcampaigns_group/mailcampaigns_api_key',		$mcAPI->APIStoreID);
 			$mcAPI->APIToken 	= Mage::getStoreConfig('mailcampaigns/mailcampaigns_group/mailcampaigns_api_usertoken',	$mcAPI->APIStoreID);
-			
+
 			try
 			{
 				if (isset($mcAPI->APIKey) && isset($mcAPI->APIToken))
@@ -966,19 +1051,19 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 					$mc_import_data = array("store_id" => $mcAPI->APIStoreID);
 					$jsondata = $mcAPI->Call("get_magento_updates", $mc_import_data);
 					$data = json_decode($jsondata["message"], true);
-					
+
 					// Mailinglist entries
 					foreach ($data as $subscriber)
 					{
 						$email 	= $subscriber["E-mail"];
 						$status = $subscriber["status"];
 						$active = $subscriber["active"];
-											
+
 						$STATUS_SUBSCRIBED = 1;
 						$STATUS_NOT_ACTIVE = 2;
 						$STATUS_UNSUBSCRIBED = 3;
 						$STATUS_UNCONFIRMED = 4;
-						
+
 						if ($active == 0)
 						{
 							$status = $STATUS_NOT_ACTIVE;
@@ -993,10 +1078,10 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 						{
 							$status = $STATUS_SUBSCRIBED;
 						}
-						
+
 						$subscriber_object = Mage::getModel('newsletter/subscriber')->loadByEmail($email);
 						$subscriber_id = $subscriber_object->getId();
-						
+
 						if ((int)$subscriber_id > 0)
 						{
 							// update
@@ -1006,7 +1091,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 								->save();
 						}
 					}
-					
+
 					// Report queue size
 					$sql        = "SELECT COUNT(*) AS queue_size FROM `".$tn__mc_api_queue."`";
 					$rows       = $connection_read->fetchAll($sql);
@@ -1156,8 +1241,8 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 				$customer_data = array();
 				$customersCollection = Mage::getModel('customer/customer')
 							  ->getCollection()
-							  ->addAttributeToSelect('*');
-							  //->addAttributeToFilter('store_id', $mcAPI->APIStoreID);  /* Changed 06/05/2015 WST */
+							  ->addAttributeToSelect('*')
+							  ->addAttributeToFilter('store_id', $mcAPI->APIStoreID);
 
 				$customersCollection->setPageSize($mcAPI->ImportCustomersHistoryAmount);
 				$pages = $currentTotal; //$customersCollection->getLastPageNumber();
@@ -1248,7 +1333,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 				$related_products = array();
 				$category_data = array();
 				$i = 0;
-				$productsCollection = Mage::getModel('catalog/product')->setStoreId( $mcAPI->APIStoreID )->setOrder('entity_id', 'ASC')->getCollection();//->addStoreFilter($mcAPI->APIStoreID);
+				$productsCollection = Mage::getModel('catalog/product')->setStoreId( $mcAPI->APIStoreID )->setOrder('entity_id', 'ASC')->getCollection()->addStoreFilter($mcAPI->APIStoreID);
 				$productsCollection->setPageSize($mcAPI->ImportProductsHistoryAmount);
 				$pages = $currentTotal; //$productsCollection->getLastPageNumber();
 
@@ -1269,9 +1354,12 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 								if (!is_array($data)) $product_data[$i][$attribute->getAttributeCode()] = $data;
 								unset($data);
 							}
-							
+
 							// get price including VAT
-							$product_data[$i]["price"] = Mage::helper('tax')->getPrice($product, $product_data[$i]["price"], true, NULL, NULL, NULL, $mcAPI->APIStoreID, NULL, true);
+							if ($product != NULL)
+							{
+								$product_data[$i]["price"] = Mage::helper('tax')->getPrice($product, $product_data[$i]["price"], true, NULL, NULL, NULL, $mcAPI->APIStoreID, NULL, true);
+							}
 
 							// get lowest tier price / staffel
 							$lowestTierPrice = $product->getResource()->getAttribute('tier_price')->getFrontend()->getValue($product);
@@ -1340,7 +1428,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 
 				$response = $mcAPI->QueueAPICall("update_magento_categories", $category_data, 0);
 				unset($category_data);
-				
+
 				$response = $mcAPI->QueueAPICall("update_magento_products", $product_data, 0);
 				unset($product_data);
 
@@ -1358,7 +1446,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 			{
 				// get all orders
 				$mc_import_data = array();
-				$ordersCollection = Mage::getModel('sales/order')->getCollection(); // ->setStoreId( $mcAPI->APIStoreID )
+				$ordersCollection = Mage::getModel('sales/order')->getCollection()->addFieldToFilter('store_id', $mcAPI->APIStoreID);
 				$ordersCollection->setPageSize($mcAPI->ImportOrdersHistoryAmount);
 				$pages = $currentTotal; //$ordersCollection->getLastPageNumber();
 
@@ -1369,20 +1457,23 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 					try
 					{
 						$mc_order_data = (array)$order->getData();
-												
-						$address = array();			
+
+						$address = array();
 						if(is_object($order->getShippingAddress()))
-						{    
+						{
 							$address = (array)$order->getShippingAddress()->getData();
-						}    
+						}
 						else
 						if(is_object($order->getBillingAddress()))
 						{
 							$address = (array)$order->getBillingAddress()->getData();
 						}
-						
+
 						// get price including VAT
-						$mc_order_data["grand_total"] = Mage::helper('tax')->getPrice($product, $mc_order_data["grand_total"], true, NULL, NULL, NULL, $mcAPI->APIStoreID, NULL, true);
+						if ($product != NULL)
+						{
+							$mc_order_data["grand_total"] = Mage::helper('tax')->getPrice($product, $mc_order_data["grand_total"], true, NULL, NULL, NULL, $mcAPI->APIStoreID, NULL, true);
+						}
 
 						if ($mc_order_data["store_id"] == $mcAPI->APIStoreID || $mc_order_data["store_id"] == 0) /* Added 06/05/2015 WST */
 						{
@@ -1429,7 +1520,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 			{
 				$category_data = array();
 				$mc_import_data = array();
-				
+
 				// Get table names
 				$tn__sales_flat_quote 					= Mage::getSingleton('core/resource')->getTableName('sales_flat_quote');
 				$tn__sales_flat_order 					= Mage::getSingleton('core/resource')->getTableName('sales_flat_order');
@@ -1468,9 +1559,12 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 						{
 							if (!is_numeric($key)) $mc_import_data[$i][$key] = $value;
 						}
-						
+
 						// get price including VAT
-						$mc_import_data[$i]["price"] = Mage::helper('tax')->getPrice($product, $mc_import_data[$i]["price"], true, NULL, NULL, NULL, $mcAPI->APIStoreID, NULL, true);
+						if ($product != NULL)
+						{
+							$mc_import_data[$i]["price"] = Mage::helper('tax')->getPrice($product, $mc_import_data[$i]["price"], true, NULL, NULL, NULL, $mcAPI->APIStoreID, NULL, true);
+						}
 
 						// get categories
 						$categories = array();
@@ -1506,12 +1600,12 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 				$response = $mcAPI->QueueAPICall("update_magento_categories", $category_data, 0);
 				$response = $mcAPI->QueueAPICall("update_magento_order_products", $mc_import_data);
 			}
-			
+
 			if ($row["collection"] == "review/review")
 			{
 				// get all orders
 				$mc_import_data = array();
-				$reviewsCollection = Mage::getModel('review/review')->getCollection(); // ->setStoreId( $mcAPI->APIStoreID )
+				$reviewsCollection = Mage::getModel('review/review')->getCollection()->addStoreFilter($mcAPI->APIStoreID);
 				$reviewsCollection->setPageSize($mcAPI->ImportReviewsHistoryAmount);
 				$pages = $currentTotal; //$reviewsCollection->getLastPageNumber();
 
@@ -1599,11 +1693,11 @@ class MailCampaigns_API
 			'datetime'      => time()
 		));
 	}
-	
+
 	function DirectOrQueueCall($api_function, $api_filters, $timeout = 2)
 	{
 		$tn__mc_api_queue = Mage::getSingleton('core/resource')->getTableName('mc_api_queue');
-		
+
 		$body = array();
 		$body["api_key"] 	= $this->APIKey;
 		$body["api_token"] 	= $this->APIToken;
@@ -1616,7 +1710,7 @@ class MailCampaigns_API
 
 		try
 		{
-			$response = file_get_contents('https://api.mailcampaigns.nl/api/v1.1/rest',null,stream_context_create(array(
+			$response = @file_get_contents('https://api.mailcampaigns.nl/api/v1.1/rest',null,stream_context_create(array(
 				'http' => array(
 					'protocol_version' => 1.1,
 					'method'           => 'POST',
@@ -1627,7 +1721,7 @@ class MailCampaigns_API
 					'timeout'		   => $timeout
 				),
 			)));
-			
+
 			if ($response === false)
 			{
 				$connection_write   = Mage::getSingleton('core/resource')->getConnection('core_write');
@@ -1665,7 +1759,7 @@ class MailCampaigns_API
 		{
 			try
 			{
-				$response = file_get_contents('https://api.mailcampaigns.nl/api/v1.1/rest',null,stream_context_create(array(
+				$response = @file_get_contents('https://api.mailcampaigns.nl/api/v1.1/rest',null,stream_context_create(array(
 					'http' => array(
 						'protocol_version' => 1.1,
 						'method'           => 'POST',
@@ -1686,7 +1780,7 @@ class MailCampaigns_API
 		{
 			try
 			{
-				$response = file_get_contents('https://api.mailcampaigns.nl/api/v1.1/rest',null,stream_context_create(array(
+				$response = @file_get_contents('https://api.mailcampaigns.nl/api/v1.1/rest',null,stream_context_create(array(
 					'http' => array(
 						'protocol_version' => 1.1,
 						'method'           => 'POST',
@@ -1711,7 +1805,7 @@ class MailCampaigns_API
 	{
 		try
 		{
-			$response = file_get_contents('https://api.mailcampaigns.nl/api/v1.1/rest',null,stream_context_create(array(
+			$response = @file_get_contents('https://api.mailcampaigns.nl/api/v1.1/rest',null,stream_context_create(array(
 				'http' => array(
 					'protocol_version' => 1.1,
 					'method'           => 'POST',
@@ -1737,7 +1831,7 @@ class MailCampaigns_API
 
 		try
 		{
-			$response = file_get_contents('https://api.mailcampaigns.nl/api/v1.1/debug',null,stream_context_create(array(
+			$response = @file_get_contents('https://api.mailcampaigns.nl/api/v1.1/debug',null,stream_context_create(array(
 				'http' => array(
 					'protocol_version' => 1.1,
 					'method'           => 'POST',
