@@ -18,7 +18,7 @@
 
 class MailCampaigns_SynchronizeContacts_Model_Observer
 {
-	public $version = '1.4.12';
+	public $version = '1.4.13';
 
 	public function ProcessCrons()
 	{
@@ -626,15 +626,46 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 							$related_products[$product->getId()]["products"][] = $pdtid;
 						}
 					}
+					
+					// get cross sell products
+					$upsell_product_collection = $product->getUpSellProducts();
+					if (sizeof($upsell_product_collection) > 0)
+					{
+						$upsell_products[$product->getId()]["store_id"] = $_storeId;
+						foreach($upsell_product_collection as $pdtid)
+						{
+							$upsell_products[$product->getId()]["products"][] = $pdtid;
+						}
+					}
+					
+					// get cross sell products
+					$crosssell_product_collection = $product->getCrossSellProducts();
+					if (sizeof($crosssell_product_collection) > 0)
+					{
+						$crosssell_products[$product->getId()]["store_id"] = $_storeId;
+						foreach($crosssell_product_collection as $pdtid)
+						{
+							$crosssell_products[$product->getId()]["products"][] = $pdtid;
+						}
+					}
 
 					$i++;
 
 					// post data
 					$response = $mcAPI->DirectOrQueueCall("update_magento_categories", $category_data);
 					$response = $mcAPI->DirectOrQueueCall("update_magento_products", $product_data);
+					
 					if (sizeof($related_products) > 0)
 					{
 						$response = $mcAPI->DirectOrQueueCall("update_magento_related_products", $related_products);
+					}
+					if (sizeof($crosssell_products) > 0)
+					{
+						$response = $mcAPI->DirectOrQueueCall("update_magento_crosssell_products", $crosssell_products);
+					}
+					if (sizeof($upsell_products) > 0)
+					{
+						$response = $mcAPI->DirectOrQueueCall("update_magento_upsell_products", $upsell_products);
 					}
 				}
 			}
@@ -778,15 +809,46 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 								$related_products[$product->getId()]["products"][] = $pdtid;
 							}
 						}
+						
+						// get cross sell products
+						$upsell_product_collection = $product->getUpSellProducts();
+						if (sizeof($upsell_product_collection) > 0)
+						{
+							$upsell_products[$product->getId()]["store_id"] = $_storeId;
+							foreach($upsell_product_collection as $pdtid)
+							{
+								$upsell_products[$product->getId()]["products"][] = $pdtid;
+							}
+						}
+						
+						// get cross sell products
+						$crosssell_product_collection = $product->getCrossSellProducts();
+						if (sizeof($crosssell_product_collection) > 0)
+						{
+							$crosssell_products[$product->getId()]["store_id"] = $_storeId;
+							foreach($crosssell_product_collection as $pdtid)
+							{
+								$crosssell_products[$product->getId()]["products"][] = $pdtid;
+							}
+						}
 
 						$i++;
 					}
 
 					$response = $mcAPI->QueueAPICall("update_magento_categories", $category_data);
 					$response = $mcAPI->QueueAPICall("update_magento_products", $product_data);
+					
 					if (sizeof($related_products) > 0)
 					{
 						$response = $mcAPI->QueueAPICall("update_magento_related_products", $related_products);
+					}
+					if (sizeof($crosssell_products) > 0)
+					{
+						$response = $mcAPI->DirectOrQueueCall("update_magento_crosssell_products", $crosssell_products);
+					}
+					if (sizeof($upsell_products) > 0)
+					{
+						$response = $mcAPI->DirectOrQueueCall("update_magento_upsell_products", $upsell_products);
 					}
 				}
 			}
@@ -1416,6 +1478,29 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 									$related_products[$product->getId()]["products"][] = $pdtid;
 								}
 							}
+							
+							// get up sell products
+							$upsell_product_collection = $product->getUpSellProducts();
+							if (sizeof($upsell_product_collection) > 0)
+							{
+								$upsell_products[$product->getId()]["store_id"] = $_storeId;
+								foreach($upsell_product_collection as $pdtid)
+								{
+									$upsell_products[$product->getId()]["products"][] = $pdtid;
+								}
+							}
+							
+							// get cross sell products
+							$crosssell_product_collection = $product->getCrossSellProducts();
+							if (sizeof($crosssell_product_collection) > 0)
+							{
+								$crosssell_products[$product->getId()]["store_id"] = $_storeId;
+								foreach($crosssell_product_collection as $pdtid)
+								{
+									$crosssell_products[$product->getId()]["products"][] = $pdtid;
+								}
+							}
+
 
 							$i++;
 						//}
@@ -1436,6 +1521,18 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 				{
 					$response = $mcAPI->QueueAPICall("update_magento_related_products", $related_products, 0);
 					unset($related_products);
+				}
+				
+				if (sizeof($crosssell_products) > 0)
+				{
+					$response = $mcAPI->QueueAPICall("update_magento_crosssell_products", $crosssell_products, 0);
+					unset($crosssell_products);
+				}
+				
+				if (sizeof($upsell_products) > 0)
+				{
+					$response = $mcAPI->QueueAPICall("update_magento_upsell_products", $upsell_products, 0);
+					unset($upsell_products);
 				}
 
 				//clear collection and free memory
