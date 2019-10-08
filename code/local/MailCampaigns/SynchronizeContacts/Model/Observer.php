@@ -18,13 +18,14 @@
 
 class MailCampaigns_SynchronizeContacts_Model_Observer
 {
-	public $version = '1.4.13';
+	public $version = '1.5.0';
 
 	public function ProcessCrons()
 	{
 		$this->ProcessAPIQueue();
 		$this->ImportAPIQueue();
 		$this->SyncStatuses();
+		$this->QuoteCron();
 	}
 
 	public function SaveSettings(Varien_Event_Observer $observer)
@@ -55,6 +56,15 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 					  `store_id` int(11) NOT NULL,
 					  `page` int(11) NOT NULL,
 					  `total` int(11) NOT NULL,
+					  `datetime` int(11) NOT NULL,
+					  PRIMARY KEY (`id`)
+					) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;";
+		$connection_write->query($sql);
+		
+		/* Create "mc_api_status" table if not exists */
+		$sql        = "CREATE TABLE IF NOT EXISTS `".Mage::getConfig()->getTablePrefix()."mc_api_status` (
+					  `id` int(11) NOT NULL AUTO_INCREMENT,
+					  `type` varchar(50) NOT NULL,
 					  `datetime` int(11) NOT NULL,
 					  PRIMARY KEY (`id`)
 					) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;";
@@ -262,7 +272,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 
 				$mc_import_data = array("store_id" => $mcAPI->APIStoreID, "collection" => 'review/review', "page" => 1, "total" => (int)$pages, "datetime" => time(), "finished" => 0);
 				$mcAPI->Call("update_magento_progress", $mc_import_data);
-			}
+			}		
 		}
     }
 
@@ -418,30 +428,29 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 				$tn__eav_entity_type 					= Mage::getSingleton('core/resource')->getTableName('eav_entity_type');
 				$tn__catalog_category_entity 			= Mage::getSingleton('core/resource')->getTableName('catalog_category_entity');
 
-				$mc_data = array(
-						"store_id" => $mc_order_data["store_id"],
-						"order_id" => $mc_order_data["entity_id"],
-						"order_name" => $mc_order_data["increment_id"],
-						"order_status" => $mc_order_data["status"],
-						"order_total" => $mc_order_data["grand_total"],
-						"customer_id" => $mc_order_data["customer_id"],
-						//"visitor_id" => $mc_order_data["visitor_id"],
-						"quote_id" => $mc_order_data["quote_id"],
-						"customer_email" => $mc_order_data["customer_email"],
-						"firstname" => $mc_order_data["customer_firstname"],
-						"lastname" => $mc_order_data["customer_lastname"],
-						"middlename" => $mc_order_data["customer_middlename"],
-						"dob" => $mc_order_data["customer_dob"],
-						"telephone" => $address["telephone"],
-						"street" => $address["street"],
-						"postcode" => $address["postcode"],
-						"city" => $address["city"],
-						"region" => $address["region"],
-						"country_id" => $address["country_id"],
-						"company" => $address["company"],
-						"created_at" => $mc_order_data["created_at"],
-						"updated_at" => $mc_order_data["updated_at"]
-					);
+				$mc_data = array();
+				
+				if(isset($mc_order_data["store_id"]))				{ $mc_data["store_id"] =		$mc_order_data["store_id"]				;}
+				if(isset($mc_order_data["entity_id"]))				{ $mc_data["order_id"] =		$mc_order_data["entity_id"]				;}
+				if(isset($mc_order_data["increment_id"]))			{ $mc_data["order_name"] =		$mc_order_data["increment_id"]			;}
+				if(isset($mc_order_data["status"]))					{ $mc_data["order_status"] =	$mc_order_data["status"]				;}
+				if(isset($mc_order_data["grand_total"]))			{ $mc_data["order_total"] =		$mc_order_data["grand_total"]			;}
+				if(isset($mc_order_data["customer_id"]))			{ $mc_data["customer_id"] =		$mc_order_data["customer_id"]			;}
+				if(isset($mc_order_data["quote_id"]))				{ $mc_data["quote_id"] =		$mc_order_data["quote_id"]				;}
+				if(isset($mc_order_data["customer_email"]))			{ $mc_data["customer_email"] =	$mc_order_data["customer_email"]		;}
+				if(isset($mc_order_data["customer_firstname"]))		{ $mc_data["firstname"] =		$mc_order_data["customer_firstname"]	;}
+				if(isset($mc_order_data["customer_lastname"]))		{ $mc_data["lastname"] =		$mc_order_data["customer_lastname"]		;}
+				if(isset($mc_order_data["customer_middlename"]))	{ $mc_data["middlename"] =		$mc_order_data["customer_middlename"]	;}
+				if(isset($mc_order_data["customer_dob"]))			{ $mc_data["dob"] =				$mc_order_data["customer_dob"]			;}
+				if(isset($address["telephone"]))					{ $mc_data["telephone"] =		$address["telephone"]					;}
+				if(isset($address["street"]))						{ $mc_data["street"] =			$address["street"]						;}
+				if(isset($address["postcode"]))						{ $mc_data["postcode"] =		$address["postcode"]					;}
+				if(isset($address["city"]))							{ $mc_data["city"] =			$address["city"]						;}
+				if(isset($address["region"]))						{ $mc_data["region"] =			$address["region"]						;}
+				if(isset($address["country_id"]))					{ $mc_data["country_id"] =		$address["country_id"]					;}
+				if(isset($address["company"]))						{ $mc_data["company"] =			$address["company"]						;}
+				if(isset($mc_order_data["created_at"]))				{ $mc_data["created_at"] =		$mc_order_data["created_at"]			;}
+				if(isset($mc_order_data["updated_at"]))				{ $mc_data["updated_at"] =		$mc_order_data["updated_at"]			;}
 
 				$response = $mcAPI->DirectOrQueueCall("update_magento_orders", $mc_data);
 
@@ -811,7 +820,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 						}
 						
 						// get cross sell products
-						$upsell_product_collection = $product->getUpSellProducts();
+						$upsell_product_collection = $product->getUpSellProductIds();
 						if (sizeof($upsell_product_collection) > 0)
 						{
 							$upsell_products[$product->getId()]["store_id"] = $_storeId;
@@ -822,7 +831,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 						}
 						
 						// get cross sell products
-						$crosssell_product_collection = $product->getCrossSellProducts();
+						$crosssell_product_collection = $product->getCrossSellProductIds();
 						if (sizeof($crosssell_product_collection) > 0)
 						{
 							$crosssell_products[$product->getId()]["store_id"] = $_storeId;
@@ -1169,6 +1178,122 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 			}
 		}
 	}
+	
+	public function QuoteCron()
+	{
+		// Create MailCampaigns API Class Object
+		$mcAPI 	= new MailCampaigns_API();
+
+		$connection_read  = Mage::getSingleton('core/resource')->getConnection('core_read');
+
+		$tn__mc_api_queue = Mage::getSingleton('core/resource')->getTableName('mc_api_queue');
+		$tn__mc_api_pages = Mage::getSingleton('core/resource')->getTableName('mc_api_pages');
+
+		// Get table names
+		$tn__sales_flat_quote 		= Mage::getSingleton('core/resource')->getTableName('sales_flat_quote');
+		$tn__sales_flat_order 		= Mage::getSingleton('core/resource')->getTableName('sales_flat_order');
+		$tn__sales_flat_quote_item 	= Mage::getSingleton('core/resource')->getTableName('sales_flat_quote_item');
+		$tn__mc_api_status			= Mage::getSingleton('core/resource')->getTableName('mc_api_status');
+		
+		// default time
+		$last_process_time 			= time() - 300; // default
+		
+		// select latest time
+		$sql        = "SELECT datetime FROM ".$tn__mc_api_status." WHERE type = 'quote_cron' ORDER BY datetime DESC LIMIT 1";
+		$rows       = $connection_read->fetchAll($sql);
+		foreach ($rows as $row) { $last_process_time = $row["datetime"]; }
+		
+		// delete old times
+		$sql = "DELETE FROM `".$tn__mc_api_status."` WHERE type = 'quote_cron'";
+		$connection_read->query($sql);
+		
+		// save new one
+		$connection_read->insert($tn__mc_api_status, array(
+			'type'   		=> 'quote_cron',
+			'datetime'      => time()
+		));
+		
+		// abandonded carts quotes
+		$quote_sql        = "SELECT q.*
+		FROM `".$tn__sales_flat_quote."` AS q
+		WHERE q.updated_at >= '".gmdate("Y-m-d H:i:s", $last_process_time)."' OR q.created_at >= '".gmdate("Y-m-d H:i:s", $last_process_time)."'
+		ORDER BY  `q`.`updated_at` DESC";
+		$quote_rows       = $connection_read->fetchAll($quote_sql);
+		
+		foreach ($quote_rows as $quote_row)
+		{
+			
+			// Set API
+			$mcAPI->APIStoreID 		= $quote_row["store_id"];
+			$mcAPI->APIKey 		= Mage::getStoreConfig('mailcampaigns/mailcampaigns_group/mailcampaigns_api_key',		$mcAPI->APIStoreID);
+			$mcAPI->APIToken 	= Mage::getStoreConfig('mailcampaigns/mailcampaigns_group/mailcampaigns_api_usertoken',	$mcAPI->APIStoreID);
+			
+			$mcAPI->ImportQuotes = Mage::getStoreConfig('mailcampaigns/mailcampaigns__syncoptions_group/mailcampaigns_import_quotes', $mcAPI->APIStoreID);
+			if ($mcAPI->ImportQuotes == 1 && $mcAPI->APIKey != "" && $mcAPI->APIToken != "" && $mcAPI->APIStoreID > 0)
+			{
+				$quote_data = $quote_row;
+				$quote_data["store_id"] = $quote_row["store_id"];
+				
+				// get quote
+				$quote = Mage::getModel('sales/quote')->setStoreId($mcAPI->APIStoreID)->load($quote_row["entity_id"]);
+			
+				if(is_object($quote->getShippingAddress())) 
+				{
+					$address = $quote->getShippingAddress();
+					
+					$quote_data["BaseShippingAmount"] 			= $address->getBaseShippingAmount();
+					$quote_data["BaseShippingDiscountAmount"] 	= $address->getBaseShippingDiscountAmount();
+					$quote_data["BaseShippingHiddenTaxAmount"] 	= $address->getBaseShippingHiddenTaxAmount();
+					$quote_data["BaseShippingInclTax"] 			= $address->getBaseShippingInclTax();
+					$quote_data["BaseShippingTaxAmount"] 		= $address->getBaseShippingTaxAmount();
+					
+					$quote_data["ShippingAmount"] 				= $address->getShippingAmount();
+					$quote_data["ShippingDiscountAmount"] 		= $address->getShippingDiscountAmount();
+					$quote_data["ShippingHiddenTaxAmount"] 		= $address->getShippingHiddenTaxAmount();
+					$quote_data["ShippingInclTax"] 				= $address->getShippingInclTax();
+					$quote_data["ShippingTaxAmount"] 			= $address->getShippingTaxAmount();
+				}
+					
+				// vat
+				$quote_data["grand_total_vat"] = $quote_data["grand_total"] - $quote_data["subtotal"];
+				$quote_data["base_grand_total_vat"] = $quote_data["base_grand_total"] - $quote_data["base_subtotal"];
+				$quote_data["grand_total_with_discount_vat"] = $quote_data["grand_total"] - $quote_data["subtotal_with_discount"];
+				$quote_data["base_grand_total_with_discount_vat"] = $quote_data["base_grand_total"] - $quote_data["base_subtotal_with_discount"];				
+				
+				// update quote
+				$mcAPI->DirectOrQueueCall("update_magento_abandonded_cart_quotes", array($quote_data));
+				
+				// delete products first
+				$mcAPI->DirectOrQueueCall("delete_magento_abandonded_cart_products", array("quote_id" => $quote_row["entity_id"], "store_id" => $quote_row["store_id"]));
+				
+				// abandonded carts quote items
+				$sql        = "SELECT q.entity_id as quote_id, p.*
+				FROM `".$tn__sales_flat_quote."` AS q
+				INNER JOIN ".$tn__sales_flat_quote_item." AS p ON p.quote_id = q.entity_id
+				WHERE q.entity_id = ".$quote_row["entity_id"]."
+				ORDER BY  `q`.`updated_at` DESC";
+				$rows       = $connection_read->fetchAll($sql);
+				
+				$i = 0;
+				$quote_item_data = array(); 
+				foreach ($rows as $row)
+				{
+					foreach ($row as $key => $value)
+					{
+						if (!is_numeric($key)) $quote_item_data[$i][$key] = $value;
+					}
+					
+					$i++;
+				}
+			
+				if ($i > 0)
+				{
+					// insert products
+					$mcAPI->DirectOrQueueCall("update_magento_abandonded_cart_products", $quote_item_data);
+				}
+			}
+		}
+	}
 
 	public function ProcessAPIQueue()
 	{
@@ -1354,15 +1479,10 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 
 			if ($row["collection"] == "newsletter/subscriber_collection")
 			{
-				// one transaction
-				// get mailing list for this store
 				$subscriber_data = array();
-				$mailinglistCollection = Mage::getResourceModel('newsletter/subscriber_collection')->load();
-				$mailinglistCollection->setPageSize($mcAPI->ImportMailinglistHistoryAmount);
+				$mailinglistCollection = Mage::getResourceModel('newsletter/subscriber_collection');
+				$mailinglistCollection->setPageSize($mcAPI->ImportMailinglistHistoryAmount)->setCurPage($currentPage);
 				$pages = $currentTotal; //$mailinglistCollection->getLastPageNumber();
-
-				$mailinglistCollection->setCurPage($currentPage);
-				$mailinglistCollection->load();
 
 				foreach($mailinglistCollection->getItems() as $subscriber)
 				{
@@ -1480,7 +1600,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 							}
 							
 							// get up sell products
-							$upsell_product_collection = $product->getUpSellProducts();
+							$upsell_product_collection = $product->getUpSellProductIds();
 							if (sizeof($upsell_product_collection) > 0)
 							{
 								$upsell_products[$product->getId()]["store_id"] = $_storeId;
@@ -1491,7 +1611,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 							}
 							
 							// get cross sell products
-							$crosssell_product_collection = $product->getCrossSellProducts();
+							$crosssell_product_collection = $product->getCrossSellProductIds();
 							if (sizeof($crosssell_product_collection) > 0)
 							{
 								$crosssell_products[$product->getId()]["store_id"] = $_storeId;
@@ -1553,6 +1673,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 				{
 					try
 					{
+						$mc_data = array();
 						$mc_order_data = (array)$order->getData();
 
 						$address = array();
@@ -1565,39 +1686,32 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 						{
 							$address = (array)$order->getBillingAddress()->getData();
 						}
-
-						// get price including VAT
-						if ($product != NULL)
-						{
-							$mc_order_data["grand_total"] = Mage::helper('tax')->getPrice($product, $mc_order_data["grand_total"], true, NULL, NULL, NULL, $mcAPI->APIStoreID, NULL, true);
-						}
+						
+						if(isset($mc_order_data["store_id"]))				{ $mc_data["store_id"] =		$mc_order_data["store_id"]				;}
+						if(isset($mc_order_data["entity_id"]))				{ $mc_data["order_id"] =		$mc_order_data["entity_id"]				;}
+						if(isset($mc_order_data["increment_id"]))			{ $mc_data["order_name"] =		$mc_order_data["increment_id"]			;}
+						if(isset($mc_order_data["status"]))					{ $mc_data["order_status"] =	$mc_order_data["status"]				;}
+						if(isset($mc_order_data["grand_total"]))			{ $mc_data["order_total"] =		$mc_order_data["grand_total"]			;}
+						if(isset($mc_order_data["customer_id"]))			{ $mc_data["customer_id"] =		$mc_order_data["customer_id"]			;}
+						if(isset($mc_order_data["quote_id"]))				{ $mc_data["quote_id"] =		$mc_order_data["quote_id"]				;}
+						if(isset($mc_order_data["customer_email"]))			{ $mc_data["customer_email"] =	$mc_order_data["customer_email"]		;}
+						if(isset($mc_order_data["customer_firstname"]))		{ $mc_data["firstname"] =		$mc_order_data["customer_firstname"]	;}
+						if(isset($mc_order_data["customer_lastname"]))		{ $mc_data["lastname"] =		$mc_order_data["customer_lastname"]		;}
+						if(isset($mc_order_data["customer_middlename"]))	{ $mc_data["middlename"] =		$mc_order_data["customer_middlename"]	;}
+						if(isset($mc_order_data["customer_dob"]))			{ $mc_data["dob"] =				$mc_order_data["customer_dob"]			;}
+						if(isset($address["telephone"]))					{ $mc_data["telephone"] =		$address["telephone"]					;}
+						if(isset($address["street"]))						{ $mc_data["street"] =			$address["street"]						;}
+						if(isset($address["postcode"]))						{ $mc_data["postcode"] =		$address["postcode"]					;}
+						if(isset($address["city"]))							{ $mc_data["city"] =			$address["city"]						;}
+						if(isset($address["region"]))						{ $mc_data["region"] =			$address["region"]						;}
+						if(isset($address["country_id"]))					{ $mc_data["country_id"] =		$address["country_id"]					;}
+						if(isset($address["company"]))						{ $mc_data["company"] =			$address["company"]						;}
+						if(isset($mc_order_data["created_at"]))				{ $mc_data["created_at"] =		$mc_order_data["created_at"]			;}
+						if(isset($mc_order_data["updated_at"]))				{ $mc_data["updated_at"] =		$mc_order_data["updated_at"]			;}
 
 						if ($mc_order_data["store_id"] == $mcAPI->APIStoreID || $mc_order_data["store_id"] == 0) /* Added 06/05/2015 WST */
 						{
-							$mc_import_data[] = array(
-								"store_id" => $mc_order_data["store_id"],
-								"order_id" => $mc_order_data["entity_id"],
-								"order_name" => $mc_order_data["increment_id"],
-								"order_status" => $mc_order_data["status"],
-								"order_total" => $mc_order_data["grand_total"],
-								"customer_id" => $mc_order_data["customer_id"],
-								//"visitor_id" => $mc_order_data["visitor_id"],
-								"quote_id" => $mc_order_data["quote_id"],
-								"customer_email" => $mc_order_data["customer_email"],
-								"firstname" => $mc_order_data["customer_firstname"],
-								"lastname" => $mc_order_data["customer_lastname"],
-								"middlename" => $mc_order_data["customer_middlename"],
-								"dob" => $mc_order_data["customer_dob"],
-								"telephone" => $address["telephone"],
-								"street" => $address["street"],
-								"postcode" => $address["postcode"],
-								"city" => $address["city"],
-								"region" => $address["region"],
-								"country_id" => $address["country_id"],
-								"company" => $address["company"],
-								"created_at" => $mc_order_data["created_at"],
-								"updated_at" => $mc_order_data["updated_at"]
-								);
+							$mc_import_data[] = $mc_data; 
 						}
 					}
 					catch (Exception $e)

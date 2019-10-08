@@ -40,4 +40,12 @@ CREATE TABLE IF NOT EXISTS `".Mage::getConfig()->getTablePrefix()."mc_api_pages`
 PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;");
 
+$installer->run("DROP TABLE IF EXISTS `".Mage::getConfig()->getTablePrefix()."mc_api_status`; 
+CREATE TABLE IF NOT EXISTS `".Mage::getConfig()->getTablePrefix()."mc_api_status` (
+`id` int(11) NOT NULL AUTO_INCREMENT,
+`type` varchar(50) NOT NULL,
+`datetime` int(11) NOT NULL,
+PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ;");
+
 $installer->endSetup();
