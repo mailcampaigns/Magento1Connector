@@ -1475,6 +1475,25 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 				// Clear collection and free memory
 				$customersCollection->clear();
 				unset($customer_data);
+			
+				// Remove job if finished
+				if (($currentPage + 1) > $pages)
+				{
+					$sql = "DELETE FROM `".$tn__mc_api_pages."` WHERE id = ".$row["id"]."";
+					$connection_write->query($sql);
+	
+					$mc_import_data = array("store_id" => $row["store_id"], "collection" => $row["collection"], "page" => ($currentPage + 1), "total" => (int)$pages, "datetime" => time(), "finished" => 1);
+					$mcAPI->Call("update_magento_progress", $mc_import_data);
+				}
+				else
+				// Update job if not finished
+				{
+					$sql = "UPDATE `".$tn__mc_api_pages."` SET page = ".($currentPage+1).", total = ".(int)$pages.", datetime = ".time()." WHERE id = ".$row["id"]."";
+					$connection_write->query($sql);
+	
+					$mc_import_data = array("store_id" => $row["store_id"], "collection" => $row["collection"], "page" => ($currentPage+1), "total" => (int)$pages, "datetime" => time(), "finished" => 0);
+					$mcAPI->Call("update_magento_progress", $mc_import_data);
+				}
 			}
 
 			if ($row["collection"] == "newsletter/subscriber_collection")
@@ -1505,6 +1524,25 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 
 				//clear collection and free memory
 				$mailinglistCollection->clear();
+			
+				// Remove job if finished
+				if (($currentPage + 1) > $pages)
+				{
+					$sql = "DELETE FROM `".$tn__mc_api_pages."` WHERE id = ".$row["id"]."";
+					$connection_write->query($sql);
+	
+					$mc_import_data = array("store_id" => $row["store_id"], "collection" => $row["collection"], "page" => ($currentPage + 1), "total" => (int)$pages, "datetime" => time(), "finished" => 1);
+					$mcAPI->Call("update_magento_progress", $mc_import_data);
+				}
+				else
+				// Update job if not finished
+				{
+					$sql = "UPDATE `".$tn__mc_api_pages."` SET page = ".($currentPage+1).", total = ".(int)$pages.", datetime = ".time()." WHERE id = ".$row["id"]."";
+					$connection_write->query($sql);
+	
+					$mc_import_data = array("store_id" => $row["store_id"], "collection" => $row["collection"], "page" => ($currentPage+1), "total" => (int)$pages, "datetime" => time(), "finished" => 0);
+					$mcAPI->Call("update_magento_progress", $mc_import_data);
+				}
 			}
 
 			if ($row["collection"] == "catalog/product")
@@ -1657,6 +1695,25 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 
 				//clear collection and free memory
 				$productsCollection->clear();
+				
+				// Remove job if finished
+				if (($currentPage + 1) > $pages)
+				{
+					$sql = "DELETE FROM `".$tn__mc_api_pages."` WHERE id = ".$row["id"]."";
+					$connection_write->query($sql);
+	
+					$mc_import_data = array("store_id" => $row["store_id"], "collection" => $row["collection"], "page" => ($currentPage + 1), "total" => (int)$pages, "datetime" => time(), "finished" => 1);
+					$mcAPI->Call("update_magento_progress", $mc_import_data);
+				}
+				else
+				// Update job if not finished
+				{
+					$sql = "UPDATE `".$tn__mc_api_pages."` SET page = ".($currentPage+1).", total = ".(int)$pages.", datetime = ".time()." WHERE id = ".$row["id"]."";
+					$connection_write->query($sql);
+	
+					$mc_import_data = array("store_id" => $row["store_id"], "collection" => $row["collection"], "page" => ($currentPage+1), "total" => (int)$pages, "datetime" => time(), "finished" => 0);
+					$mcAPI->Call("update_magento_progress", $mc_import_data);
+				}
 			}
 
 			if ($row["collection"] == "sales/order")
@@ -1725,6 +1782,25 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 
 				//clear collection and free memory
 				$ordersCollection->clear();
+			
+				// Remove job if finished
+				if (($currentPage + 1) > $pages)
+				{
+					$sql = "DELETE FROM `".$tn__mc_api_pages."` WHERE id = ".$row["id"]."";
+					$connection_write->query($sql);
+	
+					$mc_import_data = array("store_id" => $row["store_id"], "collection" => $row["collection"], "page" => ($currentPage + 1), "total" => (int)$pages, "datetime" => time(), "finished" => 1);
+					$mcAPI->Call("update_magento_progress", $mc_import_data);
+				}
+				else
+				// Update job if not finished
+				{
+					$sql = "UPDATE `".$tn__mc_api_pages."` SET page = ".($currentPage+1).", total = ".(int)$pages.", datetime = ".time()." WHERE id = ".$row["id"]."";
+					$connection_write->query($sql);
+	
+					$mc_import_data = array("store_id" => $row["store_id"], "collection" => $row["collection"], "page" => ($currentPage+1), "total" => (int)$pages, "datetime" => time(), "finished" => 0);
+					$mcAPI->Call("update_magento_progress", $mc_import_data);
+				}
 			}
 
 			if ($row["collection"] == "sales/order/products")
@@ -1810,6 +1886,25 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 				// post items
 				$response = $mcAPI->QueueAPICall("update_magento_categories", $category_data, 0);
 				$response = $mcAPI->QueueAPICall("update_magento_order_products", $mc_import_data);
+			
+				// Remove job if finished
+				if (($currentPage + 1) > $pages)
+				{
+					$sql = "DELETE FROM `".$tn__mc_api_pages."` WHERE id = ".$row["id"]."";
+					$connection_write->query($sql);
+	
+					$mc_import_data = array("store_id" => $row["store_id"], "collection" => $row["collection"], "page" => ($currentPage + 1), "total" => (int)$pages, "datetime" => time(), "finished" => 1);
+					$mcAPI->Call("update_magento_progress", $mc_import_data);
+				}
+				else
+				// Update job if not finished
+				{
+					$sql = "UPDATE `".$tn__mc_api_pages."` SET page = ".($currentPage+1).", total = ".(int)$pages.", datetime = ".time()." WHERE id = ".$row["id"]."";
+					$connection_write->query($sql);
+	
+					$mc_import_data = array("store_id" => $row["store_id"], "collection" => $row["collection"], "page" => ($currentPage+1), "total" => (int)$pages, "datetime" => time(), "finished" => 0);
+					$mcAPI->Call("update_magento_progress", $mc_import_data);
+				}
 			}
 
 			if ($row["collection"] == "review/review")
@@ -1834,25 +1929,25 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 						$mcAPI->DebugCall($e->getMessage());
 					}
 				}
-			}
-
-			// Remove job if finished
-			if (($currentPage + 1) > $pages)
-			{
-				$sql = "DELETE FROM `".$tn__mc_api_pages."` WHERE id = ".$row["id"]."";
-				$connection_write->query($sql);
-
-				$mc_import_data = array("store_id" => $row["store_id"], "collection" => $row["collection"], "page" => ($currentPage + 1), "total" => (int)$pages, "datetime" => time(), "finished" => 1);
-				$mcAPI->Call("update_magento_progress", $mc_import_data);
-			}
-			else
-			// Update job if not finished
-			{
-				$sql = "UPDATE `".$tn__mc_api_pages."` SET page = ".($currentPage+1).", total = ".(int)$pages.", datetime = ".time()." WHERE id = ".$row["id"]."";
-				$connection_write->query($sql);
-
-				$mc_import_data = array("store_id" => $row["store_id"], "collection" => $row["collection"], "page" => ($currentPage+1), "total" => (int)$pages, "datetime" => time(), "finished" => 0);
-				$mcAPI->Call("update_magento_progress", $mc_import_data);
+				
+				// Remove job if finished
+				if (($currentPage + 1) > $pages)
+				{
+					$sql = "DELETE FROM `".$tn__mc_api_pages."` WHERE id = ".$row["id"]."";
+					$connection_write->query($sql);
+	
+					$mc_import_data = array("store_id" => $row["store_id"], "collection" => $row["collection"], "page" => ($currentPage + 1), "total" => (int)$pages, "datetime" => time(), "finished" => 1);
+					$mcAPI->Call("update_magento_progress", $mc_import_data);
+				}
+				else
+				// Update job if not finished
+				{
+					$sql = "UPDATE `".$tn__mc_api_pages."` SET page = ".($currentPage+1).", total = ".(int)$pages.", datetime = ".time()." WHERE id = ".$row["id"]."";
+					$connection_write->query($sql);
+	
+					$mc_import_data = array("store_id" => $row["store_id"], "collection" => $row["collection"], "page" => ($currentPage+1), "total" => (int)$pages, "datetime" => time(), "finished" => 0);
+					$mcAPI->Call("update_magento_progress", $mc_import_data);
+				}
 			}
 		}
 	}
