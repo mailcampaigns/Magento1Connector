@@ -294,7 +294,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 			if ($mcAPI->ImportReviews == 1 && $mcAPI->APIKey != "" && $mcAPI->APIToken != "" && $mcAPI->APIStoreID > 0)
 			{
 				$review_data 	= array_merge(array("store_id" => $mcAPI->APIStoreID), $review->getData());
-				$response 		= $mcAPI->DirectOrQueueCall("update_magento_reviews", $review_data);
+				$response 		= $mcAPI->QueueAPICall("update_magento_reviews", $review_data);
 			}
 		}
 		catch (Exception $e)
@@ -351,7 +351,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 				unset($address_data["updated_at"]);
 
 				$customer_data[0] = array_filter(array_merge($address_data, $customer->getData()), 'is_scalar');	// ommit sub array levels
-				$response = $mcAPI->DirectOrQueueCall("update_magento_customers", $customer_data);
+				$response = $mcAPI->QueueAPICall("update_magento_customers", $customer_data);
 			}
 		}
 		catch (Exception $e)
@@ -380,7 +380,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 			{
 				$subscriber_data = array();
 				$subscriber_data[0] = $subscriber_tmp;
-				$response = $mcAPI->DirectOrQueueCall("update_magento_mailing_list", $subscriber_data);
+				$response = $mcAPI->QueueAPICall("update_magento_mailing_list", $subscriber_data);
 			}
 		}
 		catch (Exception $e)
@@ -452,7 +452,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 				if(isset($mc_order_data["created_at"]))				{ $mc_data["created_at"] =		$mc_order_data["created_at"]			;}
 				if(isset($mc_order_data["updated_at"]))				{ $mc_data["updated_at"] =		$mc_order_data["updated_at"]			;}
 
-				$response = $mcAPI->DirectOrQueueCall("update_magento_orders", $mc_data);
+				$response = $mcAPI->QueueAPICall("update_magento_orders", $mc_data);
 
 				// order items
 				$connection = Mage::getSingleton('core/resource')->getConnection('core_read');
@@ -491,7 +491,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 				}
 				if ($i > 0)
 				{
-					$response = $mcAPI->DirectOrQueueCall("update_magento_order_products", $mc_import_data);
+					$response = $mcAPI->QueueAPICall("update_magento_order_products", $mc_import_data);
 				}
 			}
 		}
@@ -661,20 +661,20 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 					$i++;
 
 					// post data
-					$response = $mcAPI->DirectOrQueueCall("update_magento_categories", $category_data);
-					$response = $mcAPI->DirectOrQueueCall("update_magento_products", $product_data);
+					$response = $mcAPI->QueueAPICall("update_magento_categories", $category_data);
+					$response = $mcAPI->QueueAPICall("update_magento_products", $product_data);
 					
 					if (sizeof($related_products) > 0)
 					{
-						$response = $mcAPI->DirectOrQueueCall("update_magento_related_products", $related_products);
+						$response = $mcAPI->QueueAPICall("update_magento_related_products", $related_products);
 					}
 					if (sizeof($crosssell_products) > 0)
 					{
-						$response = $mcAPI->DirectOrQueueCall("update_magento_crosssell_products", $crosssell_products);
+						$response = $mcAPI->QueueAPICall("update_magento_crosssell_products", $crosssell_products);
 					}
 					if (sizeof($upsell_products) > 0)
 					{
-						$response = $mcAPI->DirectOrQueueCall("update_magento_upsell_products", $upsell_products);
+						$response = $mcAPI->QueueAPICall("update_magento_upsell_products", $upsell_products);
 					}
 				}
 			}
@@ -853,11 +853,11 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 					}
 					if (sizeof($crosssell_products) > 0)
 					{
-						$response = $mcAPI->DirectOrQueueCall("update_magento_crosssell_products", $crosssell_products);
+						$response = $mcAPI->QueueAPICall("update_magento_crosssell_products", $crosssell_products);
 					}
 					if (sizeof($upsell_products) > 0)
 					{
-						$response = $mcAPI->DirectOrQueueCall("update_magento_upsell_products", $upsell_products);
+						$response = $mcAPI->QueueAPICall("update_magento_upsell_products", $upsell_products);
 					}
 				}
 			}
@@ -959,7 +959,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 				}
 				if ($i > 0)
 				{
-					$response = $mcAPI->DirectOrQueueCall("update_magento_abandonded_cart_quotes", $data);
+					$response = $mcAPI->QueueAPICall("update_magento_abandonded_cart_quotes", $data);
 				}
 
 				// abandonded carts quote items
@@ -992,7 +992,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 				}
 				if ($i > 0)
 				{
-					$response = $mcAPI->DirectOrQueueCall("update_magento_abandonded_cart_products", $data);
+					$response = $mcAPI->QueueAPICall("update_magento_abandonded_cart_products", $data);
 				}
 			}
 		}
@@ -1026,7 +1026,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 
 			if ($mcAPI->ImportQuotes == 1 && $mcAPI->APIKey != "" && $mcAPI->APIToken != "" && $mcAPI->APIStoreID > 0)
 			{
-				$mcAPI->DirectOrQueueCall("update_magento_abandonded_cart_products", $data);
+				$mcAPI->QueueAPICall("update_magento_abandonded_cart_products", $data);
 			}
 
 			//$items = $observer->getItems();
@@ -1058,7 +1058,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 
 				if ($mcAPI->ImportQuotes == 1 && $mcAPI->APIKey != "" && $mcAPI->APIToken != "" && $mcAPI->APIStoreID > 0)
 				{
-					$mcAPI->DirectOrQueueCall("update_magento_abandonded_cart_products", $data);
+					$mcAPI->QueueAPICall("update_magento_abandonded_cart_products", $data);
 				}
 				*/
 			//}
@@ -1089,7 +1089,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 			{
 				// delete abandonded carts quote items
 				$data = array("item_id" => $item_id, "store_id" => $store_id, "quote_id" => $quote_id);
-				$mcAPI->DirectOrQueueCall("delete_magento_abandonded_cart_product", $data);
+				$mcAPI->QueueAPICall("delete_magento_abandonded_cart_product", $data);
 			}
 		}
 		catch (Exception $e)
@@ -1261,10 +1261,10 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 				$quote_data["base_grand_total_with_discount_vat"] = $quote_data["base_grand_total"] - $quote_data["base_subtotal_with_discount"];				
 				
 				// update quote
-				$mcAPI->DirectOrQueueCall("update_magento_abandonded_cart_quotes", array($quote_data));
+				$mcAPI->QueueAPICall("update_magento_abandonded_cart_quotes", array($quote_data));
 				
 				// delete products first
-				$mcAPI->DirectOrQueueCall("delete_magento_abandonded_cart_products", array("quote_id" => $quote_row["entity_id"], "store_id" => $quote_row["store_id"]));
+				$mcAPI->QueueAPICall("delete_magento_abandonded_cart_products", array("quote_id" => $quote_row["entity_id"], "store_id" => $quote_row["store_id"]));
 				
 				// abandonded carts quote items
 				$sql        = "SELECT q.entity_id as quote_id, p.*
@@ -1289,7 +1289,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 				if ($i > 0)
 				{
 					// insert products
-					$mcAPI->DirectOrQueueCall("update_magento_abandonded_cart_products", $quote_item_data);
+					$mcAPI->QueueAPICall("update_magento_abandonded_cart_products", $quote_item_data);
 				}
 			}
 		}
@@ -1922,7 +1922,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 					try
 					{
 						$review_data 	= array_merge(array("store_id" => $mcAPI->APIStoreID), $review->getData());
-						$response 		= $mcAPI->DirectOrQueueCall("update_magento_reviews", $review_data);
+						$response 		= $mcAPI->QueueAPICall("update_magento_reviews", $review_data);
 					}
 					catch (Exception $e)
 					{
