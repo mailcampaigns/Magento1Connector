@@ -18,7 +18,7 @@
 
 class MailCampaigns_SynchronizeContacts_Model_Observer
 {
-	public $version = '1.5.1';
+	public $version = '1.5.2';
 
 	public function ProcessCrons()
 	{
@@ -511,6 +511,8 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 
 			$product_data = array();
 			$related_products = array();
+			$crosssell_products = array();
+			$upsell_products = array();
 			$category_data = array();
 			$i = 0;
 
@@ -551,43 +553,45 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 
 					// images
 					$image_id = 1;
-	        if($product->getData('image') != NULL && $product->getData('image') != "no_selection"){
-	          $product_data[$i]["mc:image_url_main"] = $product->getMediaConfig()->getMediaUrl($product->getData('image'));
-	        }
-	        else{
-	          $product_data[$i]["mc:image_url_main"] = "";
-	        }
+					if($product->getData('image') != NULL && $product->getData('image') != "no_selection"){
+					  $product_data[$i]["mc:image_url_main"] = $product->getMediaConfig()->getMediaUrl($product->getData('image'));
+					}
+					else{
+					  $product_data[$i]["mc:image_url_main"] = "";
+					}
+					
 					$product_images = $product->getMediaGalleryImages();
-	        if (!empty($product_images) && sizeof($product_images) > 0 && is_array($product_images))
+	        		if (!empty($product_images) && sizeof($product_images) > 0 && is_array($product_images))
 					{
 						foreach ($product_images as $image)
 						{
 							$product_data[$i]["mc:image_url_".$image_id++.""] = $image->getUrl();
 						}
 					}
-	        //get image from parent if empty and not configurable
-	        if($product_data[$i]["mc:image_url_main"] === "" && $product_data[$i]["parent_id"] != "" && $product_data[$i]["type_id"] != "configurable"){
-	          if($the_parent_product->getData('image') != "no_selection" && $the_parent_product->getData('image') != NULL){
-	            $product_data[$i]["mc:image_url_main"] = $the_parent_product->getMediaConfig()->getMediaUrl($the_parent_product->getData('image'));
-	          }
-	          else{
-	            $product_data[$i]["mc:image_url_main"] = "";
-	          }
-	        }
-
-	        //get image from child if empty and configurable, loops through child products until it finds an image
-	        if($product_data[$i]["mc:image_url_main"] == "" && !empty($child_product_ids) && $product_data[$i]["type_id"] == "configurable"){
-	          foreach($child_product_ids[0] as $child_product_id){
-	            $the_child_product = $objectMan->create('Magento\Catalog\Model\Product')->load($child_product_id);
-	            if($the_child_product->getData('image') != NULL && $the_child_product->getData('image') != "no_selection"){
-	              $product_data[$i]["mc:image_url_main"] = $the_child_product->getMediaConfig()->getMediaUrl($the_child_product->getData('image'));
-	              break;
-	            }
-	            else{
-	              $product_data[$i]["mc:image_url_main"] = "";
-	            }
-	          }
-	        }
+					
+					//get image from parent if empty and not configurable
+					if($product_data[$i]["mc:image_url_main"] === "" && $product_data[$i]["parent_id"] != "" && $product_data[$i]["type_id"] != "configurable"){
+					  if($the_parent_product->getData('image') != "no_selection" && $the_parent_product->getData('image') != NULL){
+						$product_data[$i]["mc:image_url_main"] = $the_parent_product->getMediaConfig()->getMediaUrl($the_parent_product->getData('image'));
+					  }
+					  else{
+						$product_data[$i]["mc:image_url_main"] = "";
+					  }
+					}
+		
+					//get image from child if empty and configurable, loops through child products until it finds an image
+					if($product_data[$i]["mc:image_url_main"] == "" && !empty($child_product_ids) && $product_data[$i]["type_id"] == "configurable"){
+					  foreach($child_product_ids[0] as $child_product_id){
+						$the_child_product = $objectMan->create('Magento\Catalog\Model\Product')->load($child_product_id);
+						if($the_child_product->getData('image') != NULL && $the_child_product->getData('image') != "no_selection"){
+						  $product_data[$i]["mc:image_url_main"] = $the_child_product->getMediaConfig()->getMediaUrl($the_child_product->getData('image'));
+						  break;
+						}
+						else{
+						  $product_data[$i]["mc:image_url_main"] = "";
+						}
+					  }
+					}
 
 					// link
 					$product_data[$i]["mc:product_url"] = $product->getProductUrl();
@@ -1317,11 +1321,12 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 			try
 			{
 				// Send it to MailCampaigns API
-				$mcAPI->PostCall($row["stream_data"]);
-
-				// Delete queued call
-				$sql        = "DELETE FROM `".$tn__mc_api_queue."` WHERE id = '".$row["id"]."'";
-				$connection_write->query($sql);
+				if ($mcAPI->PostCall($row["stream_data"]))
+				{
+					// Delete queued call
+					$sql        = "DELETE FROM `".$tn__mc_api_queue."` WHERE id = '".$row["id"]."'";
+					$connection_write->query($sql);
+				}
 			}
 			catch (Exception $e)
 			{
@@ -1550,7 +1555,9 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
 				// one transaction
 				// loop trough all products for this store
 				$product_data = array();
-				$related_products = array();
+				$$related_products = array();
+				$crosssell_products = array();
+				$upsell_products = array();
 				$category_data = array();
 				$i = 0;
 				$productsCollection = Mage::getModel('catalog/product')->setStoreId( $mcAPI->APIStoreID )->setOrder('entity_id', 'ASC')->getCollection()->addStoreFilter($mcAPI->APIStoreID);
@@ -2111,7 +2118,7 @@ class MailCampaigns_API
 	{
 		try
 		{
-			$response = @file_get_contents('https://api.mailcampaigns.nl/api/v1.1/rest',null,stream_context_create(array(
+			$response = file_get_contents('https://api.mailcampaigns.nl/api/v1.1/rest',null,stream_context_create(array(
 				'http' => array(
 					'protocol_version' => 1.1,
 					'method'           => 'POST',
@@ -2122,13 +2129,26 @@ class MailCampaigns_API
 					'timeout'		   => 5
 				),
 			)));
+			
+			$status_line = $http_response_header[0];
+			preg_match('{HTTP\/\S*\s(\d{3})}', $status_line, $match);
+			$status = $match[1];
+			
+			if ($status !== "200") 
+			{
+				return false;
+			}
+			else
+			{
+				return true;	
+			}
 		}
 		catch (Exception $e)
 		{
-
+			return false;
 		}
 
-		return json_decode($response, true);
+		return true;
 	}
 
 	function DebugCall($debug_string)
