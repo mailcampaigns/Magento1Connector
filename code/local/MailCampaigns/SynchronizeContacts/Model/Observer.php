@@ -17,7 +17,7 @@
 
 class MailCampaigns_SynchronizeContacts_Model_Observer
 {
-    public $version = '1.5.3';
+    public $version = '1.5.4';
 
     public function ProcessCrons()
     {
@@ -668,6 +668,8 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
             $product_data = array();
             $related_products = array();
             $category_data = array();
+            $crosssell_products = array();
+            $upsell_products = array();
 
             $products = $observer->getEvent()->product_ids;
 
@@ -714,11 +716,13 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
                             }
                         }
                         //get image from parent if empty and not configurable
-                        if ($product_data[$i]["mc:image_url_main"] === "" && $product_data[$i]["parent_id"] != "" && $product_data[$i]["type_id"] != "configurable") {
-                            if ($the_parent_product->getData('image') != "no_selection" && $the_parent_product->getData('image') != NULL) {
-                                $product_data[$i]["mc:image_url_main"] = $the_parent_product->getMediaConfig()->getMediaUrl($the_parent_product->getData('image'));
-                            } else {
-                                $product_data[$i]["mc:image_url_main"] = "";
+                        if(isset($product_data[$i]["parent_id"])){
+                            if ($product_data[$i]["mc:image_url_main"] === "" && $product_data[$i]["parent_id"] != "" && $product_data[$i]["type_id"] != "configurable") {
+                                if ($the_parent_product->getData('image') != "no_selection" && $the_parent_product->getData('image') != NULL) {
+                                    $product_data[$i]["mc:image_url_main"] = $the_parent_product->getMediaConfig()->getMediaUrl($the_parent_product->getData('image'));
+                                } else {
+                                    $product_data[$i]["mc:image_url_main"] = "";
+                                }
                             }
                         }
 
@@ -1000,38 +1004,40 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
                     $data = json_decode($jsondata["message"], true);
 
                     // Mailinglist entries
-                    foreach ($data as $subscriber) {
-                        $email = $subscriber["E-mail"];
-                        $status = $subscriber["status"];
-                        $active = $subscriber["active"];
+                    if(isset($data) && is_array($data)){
+                        foreach ($data as $subscriber) {
+                            $email = $subscriber["E-mail"];
+                            $status = $subscriber["status"];
+                            $active = $subscriber["active"];
 
-                        $STATUS_SUBSCRIBED = 1;
-                        $STATUS_NOT_ACTIVE = 2;
-                        $STATUS_UNSUBSCRIBED = 3;
-                        $STATUS_UNCONFIRMED = 4;
+                            $STATUS_SUBSCRIBED = 1;
+                            $STATUS_NOT_ACTIVE = 2;
+                            $STATUS_UNSUBSCRIBED = 3;
+                            $STATUS_UNCONFIRMED = 4;
 
-                        if ($active == 0) {
-                            $status = $STATUS_NOT_ACTIVE;
-                        } else
-                            if ($status == 0) {
-                                $status = $STATUS_UNSUBSCRIBED;
+                            if ($active == 0) {
+                                $status = $STATUS_NOT_ACTIVE;
                             } else
-                                if ($status == 1) {
-                                    $status = $STATUS_SUBSCRIBED;
-                                }
+                                if ($status == 0) {
+                                    $status = $STATUS_UNSUBSCRIBED;
+                                } else
+                                    if ($status == 1) {
+                                        $status = $STATUS_SUBSCRIBED;
+                                    }
 
-                        $subscriber_object = Mage::getModel('newsletter/subscriber')->loadByEmail($email);
-                        $subscriber_id = $subscriber_object->getId();
+                            $subscriber_object = Mage::getModel('newsletter/subscriber')->loadByEmail($email);
+                            $subscriber_id = $subscriber_object->getId();
 
-                        if ((int)$subscriber_id > 0) {
-                            // update
-                            $subscriber_object
-                                ->setStatus($status)
-                                ->setEmail($email)
-                                ->save();
+                            if ((int)$subscriber_id > 0) {
+                                // update
+                                $subscriber_object
+                                    ->setStatus($status)
+                                    ->setEmail($email)
+                                    ->save();
+                            }
                         }
                     }
-
+                    
                     // Report queue size
                     $sql = "SELECT COUNT(*) AS queue_size FROM `" . $tn__mc_api_queue . "`";
                     $rows = $connection_read->fetchAll($sql);
@@ -1349,7 +1355,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
             if ($row["collection"] == "catalog/product") {
                 // loop trough all products for this store
                 $product_data = array();
-                $$related_products = array();
+                $related_products = array();
                 $crosssell_products = array();
                 $upsell_products = array();
                 $category_data = array();
@@ -1419,7 +1425,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
                         // get related products
                         $related_product_collection = $product->getRelatedProductIds();
                         if (sizeof($related_product_collection) > 0) {
-                            $related_products[$product->getId()]["store_id"] = $_storeId;
+                            $related_products[$product->getId()]["store_id"] = $mcAPI->APIStoreID;
                             foreach ($related_product_collection as $pdtid) {
                                 $related_products[$product->getId()]["products"][] = $pdtid;
                             }
@@ -1428,7 +1434,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
                         // get up sell products
                         $upsell_product_collection = $product->getUpSellProductIds();
                         if (sizeof($upsell_product_collection) > 0) {
-                            $upsell_products[$product->getId()]["store_id"] = $_storeId;
+                            $upsell_products[$product->getId()]["store_id"] = $mcAPI->APIStoreID;
                             foreach ($upsell_product_collection as $pdtid) {
                                 $upsell_products[$product->getId()]["products"][] = $pdtid;
                             }
@@ -1437,7 +1443,7 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
                         // get cross sell products
                         $crosssell_product_collection = $product->getCrossSellProductIds();
                         if (sizeof($crosssell_product_collection) > 0) {
-                            $crosssell_products[$product->getId()]["store_id"] = $_storeId;
+                            $crosssell_products[$product->getId()]["store_id"] = $mcAPI->APIStoreID;
                             foreach ($crosssell_product_collection as $pdtid) {
                                 $crosssell_products[$product->getId()]["products"][] = $pdtid;
                             }

@@ -19,18 +19,25 @@
 class MailCampaigns_SynchronizeContacts_Block_Footer extends Mage_Core_Block_Template {
 
 	public function getTrackingCode() {
-
 		$store_id = Mage::app()->getStore()->getId();
+		$customer_id = 0;
+		$visitor_id = 0;
+		$product_id = 0;
 		
 		$mailcampaigns_tracking_code = Mage::getStoreConfig('mailcampaigns/mailcampaigns_tracking_code/mailcampaigns_tracking_code',$store_id);
 		if ($mailcampaigns_tracking_code == 1)
 		{
 			$api_key 		= Mage::getStoreConfig('mailcampaigns/mailcampaigns_group/mailcampaigns_api_key', $store_id); 
-
 			$visitor_data	= Mage::getModel('core/session')->getVisitorData();
 			
-			if ($visitor_data["visitor_id"] > 0) $visitor_id 	= $visitor_data["visitor_id"]; 	else $visitor_id 		= 0;
-			$customer_id 	= Mage::getSingleton('customer/session')->getCustomerId();
+			if(isset($visitor_data) && is_array($visitor_data)){
+				if ($visitor_data["visitor_id"] > 0){
+					$visitor_id = $visitor_data["visitor_id"];
+				} else{
+					$visitor_id = 0;
+				}
+				$customer_id = Mage::getSingleton('customer/session')->getCustomerId();
+			}
 			
 			$product_id	= 0; 
 			if(Mage::registry('current_product')) 
@@ -40,10 +47,10 @@ class MailCampaigns_SynchronizeContacts_Block_Footer extends Mage_Core_Block_Tem
 				
 			// build post data
 			$postdata = array(
-				'store_id' => $store_id,
-				'customer_id' => $customer_id,
-				'visitor_id' => $visitor_id,
-				'product_id' => $product_id
+				'store_id' => (int)$store_id,
+				'customer_id' => (int)$customer_id,
+				'visitor_id' => (int)$visitor_id,
+				'product_id' => (int)$product_id
 			);
 	
 			// call tracking javascript code
