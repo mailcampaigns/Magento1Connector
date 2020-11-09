@@ -1001,7 +1001,9 @@ class MailCampaigns_SynchronizeContacts_Model_Observer
                 if (isset($mcAPI->APIKey) && isset($mcAPI->APIToken)) {
                     $mc_import_data = array("store_id" => $mcAPI->APIStoreID);
                     $jsondata = $mcAPI->Call("get_magento_updates", $mc_import_data);
-                    $data = json_decode($jsondata["message"], true);
+                    if(isset($jsondata["message"])){
+                        $data = json_decode($jsondata["message"], true);
+                    }
 
                     // Mailinglist entries
                     if(isset($data) && is_array($data)){
