@@ -17,7 +17,7 @@
 
 class MailCampaigns_SynchronizeContacts_Model_Observer
 {
-    public $version = '1.5.4';
+    public $version = '1.5.5';
 
     public function ProcessCrons()
     {
